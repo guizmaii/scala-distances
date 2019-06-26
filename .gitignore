@@ -67,3 +67,6 @@ project/plugins/project/
 .lib/
 /.idea/
 local.*
+.gitsecret/keys/random_seed
+!*.secret
+secrets-env.sh
