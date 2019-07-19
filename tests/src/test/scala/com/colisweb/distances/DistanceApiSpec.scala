@@ -6,7 +6,7 @@ import com.colisweb.distances.DistanceProvider.DistanceF
 import com.colisweb.distances.Types.TravelMode.{Bicycling, Driving}
 import com.colisweb.distances.Types._
 import com.colisweb.distances.caches.{CaffeineCache, RedisCache, RedisConfiguration}
-import com.colisweb.distances.providers.google.{GoogleDistanceProvider, GoogleGeoApiContext, GoogleGeoProvider}
+import com.colisweb.distances.providers.google.{GoogleGeoApiContext, GoogleGeoProvider}
 import monix.eval.Task
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
@@ -19,7 +19,6 @@ import scala.language.postfixOps
 class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
 
   import cats.temp.par._
-
   import com.colisweb.distances.utils.Stubs._
 
   val globalExecutionContext: ExecutionContext = ExecutionContext.global
@@ -60,8 +59,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
       "pass the same test suite than GoogleDistanceProvider" should {
         def passTests[F[+ _]: Concurrent: Par](runSync: F[Any] => Any, cachingF: CachingF[F, Distance]): Unit = {
           val geocoder: GeoProvider[F]    = GoogleGeoProvider[F](geoContext)
-          val distanceF: DistanceF[F]     = GoogleDistanceProvider[F](geoContext).distance
-          val distanceApi: DistanceApi[F] = DistanceApi[F](distanceF, cachingF)
+          val distanceApi: DistanceApi[F] = DistanceApi[F](mockedDistanceF, cachingF)
 
           "says that Paris 02 is nearest to Paris 01 than Paris 18" in {
             val paris01 = runSync(geocoder.geocode(PostalCode("75001"))).asInstanceOf[LatLong]
@@ -80,8 +78,8 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
             // We only check the length as travel duration varies over time & traffic
             results.mapValues(_.length) shouldBe Map(
-              (Driving, paris01, paris02) -> 1680.0.meters,
-              (Driving, paris01, paris18) -> 4747.0.meters
+              (Driving, paris01, paris02) -> 1024.meters,
+              (Driving, paris01, paris18) -> 3429.meters
             )
 
             results((Driving, paris01, paris02)).length should be < results((Driving, paris01, paris18)).length
