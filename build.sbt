@@ -12,7 +12,7 @@ ThisBuild / scalafmtSbtCheck := true
 
 //// Dependencies
 
-val scalaCacheVersion = "0.26.0"
+val scalaCacheVersion = "0.28.0"
 
 lazy val googleMaps      = "com.google.maps"   % "google-maps-services" % "0.9.4"
 lazy val squants         = "org.typelevel"     %% "squants"             % "1.4.0"
