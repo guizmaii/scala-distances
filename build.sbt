@@ -16,7 +16,7 @@ val scalaCacheVersion = "0.26.0"
 
 lazy val googleMaps               = "com.google.maps"      % "google-maps-services" % "0.9.4"
 lazy val squants                  = "org.typelevel"        %% "squants"             % "1.4.0"
-lazy val cats                     = "org.typelevel"        %% "cats-core"           % "1.6.1"
+lazy val cats                     = "org.typelevel"        %% "cats-core"           % "2.0.0"
 lazy val `cats-effect`            = "org.typelevel"        %% "cats-effect"         % "1.4.0"
 lazy val `cats-par`               = "io.chrisdavenport"    %% "cats-par"            % "0.2.1"
 lazy val enumeratum               = "com.beachape"         %% "enumeratum"          % "1.5.13"
