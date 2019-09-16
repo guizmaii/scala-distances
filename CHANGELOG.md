@@ -4,6 +4,14 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 More infos about this file : http://keepachangelog.com/
 
+## [v3.0.0] - 2019.09.16
+* Update dependencies 
+    * cats 2.0.0 : Bring breaking changes. Please refer to the cats' documentation
+    * cats-effect 2.0.0
+    * circe 0.12.1
+    * circe-optics 0.12.0
+    * monix 3.0.0 : Used only in tests
+
 ## [v2.0.0] - 2019.09.05
 
 * Add `Cache` methods:
