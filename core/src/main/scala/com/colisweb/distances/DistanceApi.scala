@@ -1,8 +1,8 @@
 package com.colisweb.distances
 
+import cats.Parallel
 import cats.effect.Async
 import cats.kernel.Semigroup
-import cats.temp.par.Par
 import com.colisweb.distances.Cache.{Caching, GetCached}
 import com.colisweb.distances.DistanceProvider.{BatchDistanceF, DistanceF}
 import com.colisweb.distances.Types._
@@ -20,10 +20,10 @@ import scala.collection.breakOut
   * @param caching A function which, given a value, caches it and returns it wrapped in a F typeclass instance.
   * @param getCached A function which try to retrieve a value from the cache. The value is wrapped in a Option,
   *                  which is also wrapped in a F typeclass instance.
-  * @tparam F A typeclass which is constructed from Async and Par.
+  * @tparam F A typeclass which is constructed from Async and Parallel.
   * @tparam E An error type, specific to the distance provider.
   */
-class DistanceApi[F[_]: Async: Par, E](
+class DistanceApi[F[_]: Async: Parallel, E](
     distanceF: DistanceF[F, E],
     batchDistanceF: BatchDistanceF[F, E],
     caching: Caching[F, Distance],
@@ -32,7 +32,6 @@ class DistanceApi[F[_]: Async: Par, E](
 
   import DistanceApi._
   import cats.implicits._
-  import cats.temp.par._
   import com.colisweb.distances.utils.Implicits._
 
   final def distance(
@@ -213,7 +212,7 @@ object DistanceApi {
   val decoder: Decoder[Distance] = Distance.decoder
   val encoder: Encoder[Distance] = Distance.encoder
 
-  final def apply[F[_]: Async: Par, E](
+  final def apply[F[_]: Async: Parallel, E](
       distanceF: DistanceF[F, E],
       batchDistanceF: BatchDistanceF[F, E],
       caching: Caching[F, Distance],

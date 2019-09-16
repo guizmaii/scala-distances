@@ -16,15 +16,14 @@ val scalaCacheVersion = "0.26.0"
 
 lazy val googleMaps               = "com.google.maps"      % "google-maps-services" % "0.9.4"
 lazy val squants                  = "org.typelevel"        %% "squants"             % "1.4.0"
-lazy val cats                     = "org.typelevel"        %% "cats-core"           % "1.6.1"
-lazy val `cats-effect`            = "org.typelevel"        %% "cats-effect"         % "1.4.0"
-lazy val `cats-par`               = "io.chrisdavenport"    %% "cats-par"            % "0.2.1"
+lazy val cats                     = "org.typelevel"        %% "cats-core"           % "2.0.0"
+lazy val catsEffect               = "org.typelevel"        %% "cats-effect"         % "2.0.0"
 lazy val enumeratum               = "com.beachape"         %% "enumeratum"          % "1.5.13"
-lazy val monix                    = "io.monix"             %% "monix"               % "3.0.0-RC2"
+lazy val monix                    = "io.monix"             %% "monix"               % "3.0.0"
 lazy val okHttpLoggingInterceptor = "com.squareup.okhttp3" % "logging-interceptor"  % "4.1.0"
 
-lazy val circeVersion       = "0.11.1"
-lazy val circeOpticsVersion = "0.11.0"
+lazy val circeVersion       = "0.12.1"
+lazy val circeOpticsVersion = "0.12.0"
 
 lazy val circeCore          = "io.circe" %% "circe-core"           % circeVersion
 lazy val circeGeneric       = "io.circe" %% "circe-generic"        % circeVersion
@@ -76,8 +75,7 @@ lazy val core = project
     libraryDependencies ++= Seq(
       squants,
       cats,
-      `cats-effect`,
-      `cats-par`,
+      catsEffect,
       enumeratum,
       okHttpLoggingInterceptor
     ) ++ scalacacheCore ++ circeAll ++ testKit

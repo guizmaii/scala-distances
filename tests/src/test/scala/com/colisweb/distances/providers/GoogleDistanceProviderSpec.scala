@@ -2,8 +2,8 @@ package com.colisweb.distances.providers
 
 import java.time.Instant
 
+import cats.Parallel
 import cats.effect.{Concurrent, ContextShift, IO}
-import cats.temp.par.Par
 import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types._
 import com.colisweb.distances.providers.google.{
@@ -26,7 +26,7 @@ class GoogleDistanceProviderSpec extends WordSpec with Matchers {
 
   lazy val geoContext: GoogleGeoApiContext = GoogleGeoApiContext(System.getenv().get("GOOGLE_API_KEY"), loggingF)
 
-  def passTests[F[+ _]: Concurrent: Par](runSync: F[Any] => Any): Unit = {
+  def passTests[F[+ _]: Concurrent: Parallel](runSync: F[Any] => Any): Unit = {
     val distanceApi: DistanceProvider[F, GoogleDistanceProviderError] = GoogleDistanceProvider[F](geoContext)
 
     val paris01 = LatLong(48.8640493, 2.3310526)

@@ -1,7 +1,7 @@
 package com.colisweb.distances.providers
 
+import cats.Parallel
 import cats.effect.{Concurrent, ContextShift, IO}
-import cats.temp.par.Par
 import com.colisweb.distances.GeoProvider
 import com.colisweb.distances.Types.{LatLong, NonAmbiguousAddress, PostalCode}
 import com.colisweb.distances.providers.google.{GoogleGeoApiContext, GoogleGeoProvider}
@@ -28,7 +28,7 @@ class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures wit
   val paris02              = LatLong(48.8675641, 2.34399)
   val paris18              = LatLong(48.891305, 2.3529867)
 
-  def passTests[F[+ _]: Concurrent: Par](runSync: F[Any] => Any): Unit = {
+  def passTests[F[+ _]: Concurrent: Parallel](runSync: F[Any] => Any): Unit = {
 
     val geocoder: GeoProvider[F] = GoogleGeoProvider[F](geoContext)
 

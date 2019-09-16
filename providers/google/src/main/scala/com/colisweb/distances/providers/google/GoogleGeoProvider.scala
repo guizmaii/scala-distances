@@ -1,5 +1,6 @@
 package com.colisweb.distances.providers.google
 
+import cats.Parallel
 import cats.effect.{Concurrent, Sync}
 import com.google.maps.model.{ComponentFilter, LatLng => GoogleLatLng}
 import com.google.maps.{GeocodingApi, GeocodingApiRequest}
@@ -30,10 +31,9 @@ final case class NonAmbiguousAddressNotFound(message: String) extends GoogleGeoP
 object GoogleGeoProvider {
 
   import cats.implicits._
-  import cats.temp.par._
   import com.colisweb.distances.providers.google.utils.Implicits._
 
-  final def apply[F[_]: Concurrent: Par](geoApiContext: GoogleGeoApiContext): GeoProvider[F] =
+  final def apply[F[_]: Concurrent: Parallel](geoApiContext: GoogleGeoApiContext): GeoProvider[F] =
     new GeoProvider[F] {
 
       private final def rawRequest: F[GeocodingApiRequest] =

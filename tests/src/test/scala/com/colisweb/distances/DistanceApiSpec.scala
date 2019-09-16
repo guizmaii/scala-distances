@@ -2,6 +2,7 @@ package com.colisweb.distances
 
 import java.time.Instant
 
+import cats.Parallel
 import cats.effect.{Concurrent, ContextShift, IO}
 import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types._
@@ -19,7 +20,6 @@ import scala.language.postfixOps
 
 class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
 
-  import cats.temp.par._
   import com.colisweb.distances.utils.Stubs._
 
   val globalExecutionContext: ExecutionContext = ExecutionContext.global
@@ -64,7 +64,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
     "#distances" should {
       "pass the same test suite than GoogleDistanceProvider" should {
-        def passTests[F[+ _]: Concurrent: Par](runSync: F[Any] => Any, cache: Cache[F]): Unit = {
+        def passTests[F[+ _]: Concurrent: Parallel](runSync: F[Any] => Any, cache: Cache[F]): Unit = {
           def removeFromCache(
               travelMode: TravelMode,
               origin: LatLong,
