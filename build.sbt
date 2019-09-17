@@ -15,7 +15,7 @@ ThisBuild / scalafmtSbtCheck := true
 val scalaCacheVersion = "0.26.0"
 
 lazy val googleMaps               = "com.google.maps"      % "google-maps-services" % "0.9.4"
-lazy val squants                  = "org.typelevel"        %% "squants"             % "1.4.0"
+lazy val squants                  = "org.typelevel"        %% "squants"             % "1.5.0"
 lazy val cats                     = "org.typelevel"        %% "cats-core"           % "2.0.0"
 lazy val catsEffect               = "org.typelevel"        %% "cats-effect"         % "2.0.0"
 lazy val enumeratum               = "com.beachape"         %% "enumeratum"          % "1.5.13"
