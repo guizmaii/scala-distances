@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 import scala.math._
 
 object Stubs {
-  case class ErrorMock(message: String = "mock") extends DistanceApiError(message)
+  case class ErrorMock(message: String = "mock") extends Exception(message) with DistanceApiError
 
   def distanceProviderStub[F[_]: Async, E <: DistanceApiError]: DistanceProvider[F, E] =
     new DistanceProvider[F, E] {

@@ -4,8 +4,17 @@ import com.colisweb.distances.error.DistanceApiError
 
 import scala.util.control.NoStackTrace
 
-sealed abstract class GoogleDistanceProviderError(message: String) extends DistanceApiError(message) with NoStackTrace
-final case class DistanceNotFound(message: String)                 extends GoogleDistanceProviderError(message)
-final case class NoResults(message: String)                        extends GoogleDistanceProviderError(message)
-final case class PastTraffic(message: String)                      extends GoogleDistanceProviderError(message)
-final case class UnknownGoogleError(message: String)               extends GoogleDistanceProviderError(message)
+sealed trait GoogleDistanceProviderError extends DistanceApiError
+final case class DistanceNotFound(message: String)
+    extends Exception(message)
+    with GoogleDistanceProviderError
+    with NoStackTrace
+final case class NoResults(message: String)
+    extends Exception(message)
+    with GoogleDistanceProviderError
+    with NoStackTrace
+final case class PastTraffic(message: String)
+    extends Exception(message)
+    with GoogleDistanceProviderError
+    with NoStackTrace
+final case class UnknownGoogleError(message: String) extends Exception(message) with GoogleDistanceProviderError
