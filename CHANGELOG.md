@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 More infos about this file : http://keepachangelog.com/
 
+## [v3.1.0] - 2019.09.20
+* Added an upper type bound on `DistanceApi[F, E]
+    * Created an abstract class `DistanceApiError` to prevent unbounded type in the API calls
+    * GoogleDistanceProviderError` now extends `DistanceApiError` 
+
 ## [v3.0.0] - 2019.09.16
 * Update dependencies 
     * cats 2.0.0 : Bring breaking changes. Please refer to the cats' documentation
