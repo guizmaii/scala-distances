@@ -6,6 +6,7 @@ import cats.kernel.Semigroup
 import com.colisweb.distances.Cache.{Caching, GetCached}
 import com.colisweb.distances.DistanceProvider.{BatchDistanceF, DistanceF}
 import com.colisweb.distances.Types._
+import com.colisweb.distances.error.DistanceApiError
 import io.circe.{Decoder, Encoder}
 
 import scala.collection.breakOut
@@ -23,7 +24,7 @@ import scala.collection.breakOut
   * @tparam F A typeclass which is constructed from Async and Parallel.
   * @tparam E An error type, specific to the distance provider.
   */
-class DistanceApi[F[_]: Async: Parallel, E](
+class DistanceApi[F[_]: Async: Parallel, E <: DistanceApiError](
     distanceF: DistanceF[F, E],
     batchDistanceF: BatchDistanceF[F, E],
     caching: Caching[F, Distance],
@@ -212,7 +213,7 @@ object DistanceApi {
   val decoder: Decoder[Distance] = Distance.decoder
   val encoder: Encoder[Distance] = Distance.encoder
 
-  final def apply[F[_]: Async: Parallel, E](
+  final def apply[F[_]: Async: Parallel, E <: DistanceApiError](
       distanceF: DistanceF[F, E],
       batchDistanceF: BatchDistanceF[F, E],
       caching: Caching[F, Distance],

@@ -4,6 +4,7 @@ import cats.Monad
 import cats.effect.Async
 import com.colisweb.distances.Types.{Distance, LatLong, Segment, TrafficHandling}
 import com.colisweb.distances.caches.NoCache
+import com.colisweb.distances.error.DistanceApiError
 import com.colisweb.distances.{DistanceProvider, _}
 import squants.motion.KilometersPerHour
 import squants.space.Meters
@@ -12,7 +13,9 @@ import scala.concurrent.duration._
 import scala.math._
 
 object Stubs {
-  def distanceProviderStub[F[_]: Async, E]: DistanceProvider[F, E] =
+  case class ErrorMock(message: String = "mock") extends DistanceApiError(message)
+
+  def distanceProviderStub[F[_]: Async, E <: DistanceApiError]: DistanceProvider[F, E] =
     new DistanceProvider[F, E] {
       override def distance(
           mode: TravelMode,
@@ -55,13 +58,15 @@ object Stubs {
       origins: List[LatLong],
       destinations: List[LatLong],
       maybeTrafficHandling: Option[TrafficHandling]
-  ): F[Map[Segment, Either[Unit, Distance]]] =
+  ): F[Map[Segment, Either[DistanceApiError, Distance]]] =
     Monad[F].pure {
       origins
         .flatMap(origin => destinations.map(Segment(origin, _)))
         .map { segment =>
-          val either: Either[Unit, Distance] =
-            Right[Unit, Distance](mockDistance(mode, segment.origin, segment.destination, maybeTrafficHandling))
+          val either: Either[DistanceApiError, Distance] =
+            Right[DistanceApiError, Distance](
+              mockDistance(mode, segment.origin, segment.destination, maybeTrafficHandling)
+            )
 
           segment -> either
         }
@@ -73,12 +78,12 @@ object Stubs {
       origins: List[LatLong],
       destinations: List[LatLong],
       maybeTrafficHandling: Option[TrafficHandling]
-  ): F[Map[Segment, Either[Unit, Distance]]] =
+  ): F[Map[Segment, Either[DistanceApiError, Distance]]] =
     Monad[F].pure {
       // FIXME: does not compile if arguments are not used
       origins
         .flatMap(origin => destinations.map(destination => (Segment(origin, destination), mode, maybeTrafficHandling)))
-        .map { case (segment, _, _) => segment -> Left[Unit, Distance](()) }
+        .map { case (segment, _, _) => segment -> Left[DistanceApiError, Distance](ErrorMock()) }
         .toMap
     }
 
@@ -87,7 +92,7 @@ object Stubs {
       origin: LatLong,
       destination: LatLong,
       maybeTrafficHandling: Option[TrafficHandling]
-  ): F[Either[Unit, Distance]] =
+  ): F[Either[DistanceApiError, Distance]] =
     Monad[F].pure(Right(mockDistance(mode, origin, destination, maybeTrafficHandling)))
 
   def mockedDistanceErrorF[F[_]: Monad](
@@ -95,9 +100,11 @@ object Stubs {
       origin: LatLong,
       destination: LatLong,
       maybeTrafficHandling: Option[TrafficHandling]
-  ): F[Either[Unit, Distance]] =
+  ): F[Either[DistanceApiError, Distance]] = {
     // FIXME: does not compile if arguments are not used
-    Monad[F].pure(((mode, origin, destination, maybeTrafficHandling) -> Left(()))._2)
+    val mapping = (mode, origin, destination, maybeTrafficHandling) -> Left(ErrorMock())
+    Monad[F].pure(mapping._2)
+  }
 
   private def mockDistance[F[_]: Monad](
       mode: TravelMode,

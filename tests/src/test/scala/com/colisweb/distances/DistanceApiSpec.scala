@@ -7,6 +7,7 @@ import cats.effect.{Concurrent, ContextShift, IO}
 import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types._
 import com.colisweb.distances.caches.{CaffeineCache, RedisCache, RedisConfiguration}
+import com.colisweb.distances.error.DistanceApiError
 import com.colisweb.distances.providers.google.GoogleGeoApiContext
 import monix.eval.Task
 import org.scalatest.concurrent.ScalaFutures
@@ -35,9 +36,10 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
     "#distance" should {
       "if origin == destination" should {
         "not call the provider and return immmediatly Distance.zero" in {
-          val cache          = CaffeineCache[IO](Some(1 days))
-          val stub           = distanceProviderStub[IO, Unit]
-          val distanceApi    = DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get)
+          val cache = CaffeineCache[IO](Some(1 days))
+          val stub  = distanceProviderStub[IO, DistanceApiError]
+          val distanceApi =
+            DistanceApi[IO, DistanceApiError](stub.distance, stub.batchDistances, cache.caching, cache.get)
           val latLong        = LatLong(0.0, 0.0)
           val expectedResult = Map((Driving, Right(Distance.zero)), (Bicycling, Right(Distance.zero)))
 
@@ -49,9 +51,10 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
     "#distanceFromPostalCodes" should {
       "if origin == destination" should {
         "not call the provider and return immmediatly Distance.zero" in {
-          val cache          = CaffeineCache[IO](Some(1 days))
-          val stub           = distanceProviderStub[IO, Unit]
-          val distanceApi    = DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get)
+          val cache = CaffeineCache[IO](Some(1 days))
+          val stub  = distanceProviderStub[IO, DistanceApiError]
+          val distanceApi =
+            DistanceApi[IO, DistanceApiError](stub.distance, stub.batchDistances, cache.caching, cache.get)
           val postalCode     = PostalCode("59000")
           val expectedResult = Map((Driving, Right(Distance.zero)), (Bicycling, Right(Distance.zero)))
 
@@ -86,11 +89,16 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
                 removeFromCache(travelMode, origin, destination, maybeTrafficHandling)
             }
 
-          val distanceApi: DistanceApi[F, Unit] =
-            DistanceApi[F, Unit](mockedDistanceF[F], mockedBatchDistanceF[F], cache.caching, cache.get)
+          val distanceApi: DistanceApi[F, DistanceApiError] =
+            DistanceApi[F, DistanceApiError](mockedDistanceF[F], mockedBatchDistanceF[F], cache.caching, cache.get)
 
-          val errorDistanceApi: DistanceApi[F, Unit] =
-            DistanceApi[F, Unit](mockedDistanceErrorF[F], mockedBatchDistanceErrorF[F], cache.caching, cache.get)
+          val errorDistanceApi: DistanceApi[F, DistanceApiError] =
+            DistanceApi[F, DistanceApiError](
+              mockedDistanceErrorF[F],
+              mockedBatchDistanceErrorF[F],
+              cache.caching,
+              cache.get
+            )
 
           val paris01 = LatLong(48.8640493, 2.3310526)
           val paris02 = LatLong(48.8675641, 2.34399)
@@ -181,7 +189,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
             val results =
               runSync(distanceApi.batchDistances(origins, destinations, Driving, None))
-                .asInstanceOf[Map[Segment, Either[Unit, Distance]]]
+                .asInstanceOf[Map[Segment, Either[_, Distance]]]
 
             results(Segment(paris01, paris02)).right.get.length should be <
               results(Segment(paris01, paris18)).right.get.length
@@ -198,7 +206,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
             val results =
               runSync(distanceApi.batchDistances(origins, destinations, Driving, None))
-                .asInstanceOf[Map[Segment, Either[Unit, Distance]]]
+                .asInstanceOf[Map[Segment, Either[_, Distance]]]
 
             results.values.forall(_.isRight) shouldBe true
 
@@ -206,7 +214,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
             val moreDestinations = destinations :+ LatLong(48.83, 2.3)
 
             val moreResults = runSync(errorDistanceApi.batchDistances(moreOrigins, moreDestinations, Driving, None))
-              .asInstanceOf[Map[Segment, Either[Unit, Distance]]]
+              .asInstanceOf[Map[Segment, Either[_, Distance]]]
 
             val knownEntries =
               moreResults.filterKeys(path => origins.contains(path.origin) && destinations.contains(path.destination))
@@ -226,7 +234,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
             val results =
               runSync(distanceApi.batchDistances(origins, destinations, Driving, None))
-                .asInstanceOf[Map[Segment, Either[Unit, Distance]]]
+                .asInstanceOf[Map[Segment, Either[_, Distance]]]
 
             val caches = segments.map { segment =>
               runSync(cache.get(Distance.decoder, Driving, segment.origin, segment.destination, None))
@@ -245,7 +253,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
             val allResults =
               runSync(distanceApi.batchDistances(allOrigins, allDestinations, Driving, None))
-                .asInstanceOf[Map[Segment, Either[Unit, Distance]]]
+                .asInstanceOf[Map[Segment, Either[_, Distance]]]
 
             val allCaches = allSegments.map { segment =>
               runSync(cache.get(Distance.decoder, Driving, segment.origin, segment.destination, None))

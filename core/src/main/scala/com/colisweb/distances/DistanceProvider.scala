@@ -2,10 +2,11 @@ package com.colisweb.distances
 
 import cats.effect.Async
 import com.colisweb.distances.Types._
+import com.colisweb.distances.error.DistanceApiError
 
 // The errors embedded by E are related to the distance computation (e.g. no routes available)
 // The errors embedded by F are on the technical side (e.g. timeout)
-abstract class DistanceProvider[F[_]: Async, E] {
+abstract class DistanceProvider[F[_]: Async, E <: DistanceApiError] {
   def distance(
       mode: TravelMode,
       origin: LatLong,
@@ -26,8 +27,9 @@ abstract class DistanceProvider[F[_]: Async, E] {
 }
 
 object DistanceProvider {
-  type DistanceF[F[_], E] = (TravelMode, LatLong, LatLong, Option[TrafficHandling]) => F[Either[E, Distance]]
+  type DistanceF[F[_], E <: DistanceApiError] =
+    (TravelMode, LatLong, LatLong, Option[TrafficHandling]) => F[Either[E, Distance]]
 
-  type BatchDistanceF[F[_], E] =
+  type BatchDistanceF[F[_], E <: DistanceApiError] =
     (TravelMode, List[LatLong], List[LatLong], Option[TrafficHandling]) => F[Map[Segment, Either[E, Distance]]]
 }
