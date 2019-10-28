@@ -1,17 +1,19 @@
 package com.colisweb.distances.re.bird
 import cats.Applicative
-import com.colisweb.distances.re.DistanceApi
+import cats.data.Kleisli
+import com.colisweb.distances.re.Distances
 import com.colisweb.distances.re.model.Path.VelocityParameter
 import com.colisweb.distances.re.model.{DistanceAndDuration, Path}
 import squants.space.Kilometers
 
 import scala.concurrent.duration._
 
-class BirdHaversineDistance[F[_]: Applicative, O: VelocityParameter] extends DistanceApi[F, Nothing, O] {
+class BirdHaversineDistance[F[_]: Applicative, R: VelocityParameter]
+  extends Distances.Function[F, Nothing, R] {
 
-  override def distance(path: Path[O]): F[Either[Nothing, DistanceAndDuration]] = {
+  override def apply(path: Path[R]): F[Either[Nothing, DistanceAndDuration]] = {
     val distanceInKilometers = Haversine.distance(path.origin, path.destination)
-    val velocity             = VelocityParameter[O].velocity(path.parameters)
+    val velocity             = VelocityParameter[R].velocity(path.parameters)
     val timeInSeconds        = DurationFromSpeed.durationForDistance(distanceInKilometers, velocity)
     val distanceAndDuration  = DistanceAndDuration(Kilometers(distanceInKilometers), timeInSeconds.seconds)
     Applicative[F].pure(Right(distanceAndDuration))
@@ -20,6 +22,11 @@ class BirdHaversineDistance[F[_]: Applicative, O: VelocityParameter] extends Dis
 
 object BirdHaversineDistance {
 
-  def apply[F[_]: Applicative, O: VelocityParameter]: BirdHaversineDistance[F, O] =
+  def apply[F[_]: Applicative, R: VelocityParameter]: Distances.Function[F, Nothing, R] =
     new BirdHaversineDistance
+
+  def builder[F[_]: Applicative, R: VelocityParameter]: Distances.Builder[F, Nothing, R] = {
+    val instance = apply
+    Kleisli(instance.apply)
+  }
 }

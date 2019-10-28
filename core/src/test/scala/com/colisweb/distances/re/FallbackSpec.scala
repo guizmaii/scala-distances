@@ -5,6 +5,7 @@ import com.colisweb.distances.re.util.{StaticDistanceApi, StaticDistanceOptionAp
 import org.scalatest.{Matchers, WordSpec}
 
 class FallbackSpec extends WordSpec with Matchers {
+  import com.colisweb.distances.re.builder.DistanceApiBuilder.Builder
   import TestValues._
 
   "Fallback" should {
@@ -17,8 +18,8 @@ class FallbackSpec extends WordSpec with Matchers {
       val second = StaticDistanceApi[Id, TestTypes.Error](
         path12 -> Right(d12)
       )
+      val distance = first.fallback(second).apply(path12)
 
-      val distance = Fallback(first, second).distance(path12)
       distance shouldBe Right(d12)
     }
 
@@ -29,7 +30,7 @@ class FallbackSpec extends WordSpec with Matchers {
       )
       val second = StaticDistanceApi.empty[Id, TestTypes.Error]
 
-      val distance = Fallback(first, second).distance(path12)
+      val distance = first.fallback(second).apply(path12)
       distance shouldBe Right(d12)
     }
 
@@ -42,7 +43,7 @@ class FallbackSpec extends WordSpec with Matchers {
         path12 -> Left(TestTypes.Error("boom"))
       )
 
-      val distance = Fallback(first, second).distance(path12)
+      val distance = first.fallback(second).apply(path12)
       distance shouldBe Left(TestTypes.Error("boom"))
     }
   }
@@ -58,7 +59,7 @@ class FallbackSpec extends WordSpec with Matchers {
         path12 -> Right(d12)
       )
 
-      val distance = Fallback(first, second).distance(path12)
+      val distance = Fallback(first, second).apply(path12)
       distance shouldBe Right(d12)
     }
 
@@ -69,7 +70,7 @@ class FallbackSpec extends WordSpec with Matchers {
       )
       val second = StaticDistanceApi.empty[Id, TestTypes.Error]
 
-      val distance = Fallback(first, second).distance(path12)
+      val distance = Fallback(first, second).apply(path12)
       distance shouldBe Right(d12)
     }
 
@@ -82,7 +83,7 @@ class FallbackSpec extends WordSpec with Matchers {
         path12 -> Left(TestTypes.Error("boom"))
       )
 
-      val distance = Fallback(first, second).distance(path12)
+      val distance = Fallback(first, second).apply(path12)
       distance shouldBe Left(TestTypes.Error("boom"))
     }
   }
