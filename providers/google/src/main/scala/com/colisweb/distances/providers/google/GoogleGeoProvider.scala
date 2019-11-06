@@ -50,7 +50,7 @@ object GoogleGeoProvider {
           rawRequest
             .flatMap { request =>
               request
-                .components(ComponentFilter.postalCode(postalCode.value))
+                .address(postalCode.value)
                 .asEffect[F]
                 .flatMap { response =>
                   Sync[F]
