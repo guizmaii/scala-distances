@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 More infos about this file : http://keepachangelog.com/
 
+## [v3.0.3] - 2019.11.06
+* Fix for `Google Geoprovider`: using `address` parameter instead of `components` for 
+postal code geocoding to succeed in some not working cases.
+
 ## [v3.0.2] - 2019.10.17
 * Fix: the no-cache module was throwing an exception on methods besides `cachingF`.
 
