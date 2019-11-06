@@ -51,6 +51,7 @@ object GoogleGeoProvider {
             .flatMap { request =>
               request
                 .address(postalCode.value)
+                .components(ComponentFilter.country("fr"))  // TODO: Avoid hardcoded country
                 .asEffect[F]
                 .flatMap { response =>
                   Sync[F]
