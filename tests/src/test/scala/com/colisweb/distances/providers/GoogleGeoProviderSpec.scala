@@ -27,6 +27,8 @@ class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures wit
   val paris01              = LatLong(48.8640493, 2.3310526)
   val paris02              = LatLong(48.8675641, 2.34399)
   val paris18              = LatLong(48.891305, 2.3529867)
+  val paris116             = LatLong(48.8582383, 2.2749434)
+  val merignac             = LatLong(44.8391346, -0.6867939)
 
   def passTests[F[+ _]: Concurrent: Parallel](runSync: F[Any] => Any): Unit = {
 
@@ -52,7 +54,9 @@ class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures wit
           ("Artigues-près-Bordeaux", "33370", artiguesPresBordeaux),
           ("Paris 01", "75001", paris01),
           ("Paris 02", "75002", paris02),
-          ("Paris 18", "75018", paris18)
+          ("Paris 18", "75018", paris18),
+          ("Paris 116", "75116", paris116),
+          ("Mérignac", "33700", merignac)
         )
 
         places.foreach {
