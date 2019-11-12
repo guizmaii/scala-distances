@@ -102,6 +102,36 @@ class CacheSpec extends WordSpec with Matchers with PropertyChecks {
     }
   }
 
+  def noCacheTests[F[+ _]](runSync: F[Any] => Any)(implicit F: Async[F]): Unit = {
+    val noCache = NoCache[F]()
+
+    "no cache" should {
+      "not save things and not access them" in {
+        forAll(travelModeGen, latLongGen, latLongGen, distanceGen) { (mode, origin, destination, distance) =>
+          // Cache with cachingF
+          runSync(
+            noCache.cachingF(F.pure(distance), Distance.decoder, Distance.encoder, mode, origin, destination)
+          ).asInstanceOf[Distance] shouldBe distance
+
+          // Retrieve value
+          runSync(
+            noCache.get(Distance.decoder, mode, origin, destination)
+          ).asInstanceOf[Option[Distance]] shouldBe None
+
+          // Cache with caching
+          runSync(
+            noCache.caching(distance, Distance.decoder, Distance.encoder, origin, destination, mode)
+          ).asInstanceOf[Distance] shouldBe distance
+
+          // Retrieve value
+          runSync(
+            noCache.get(Distance.decoder, origin, destination, mode)
+          ).asInstanceOf[Option[Distance]] shouldBe None
+        }
+      }
+    }
+  }
+
   "with cats-effect IO" should {
     "with CaffeineCache" should {
       tests[IO](() => CaffeineCache(Some(1 day)))(_.unsafeRunSync())
@@ -109,6 +139,10 @@ class CacheSpec extends WordSpec with Matchers with PropertyChecks {
 
     "pass RedisCache" should {
       tests[IO](() => RedisCache(redisConfiguration, Some(1 day)))(_.unsafeRunSync())
+    }
+
+    "pass NoCache" should {
+      noCacheTests[IO](_.unsafeRunSync())
     }
   }
 
@@ -121,6 +155,10 @@ class CacheSpec extends WordSpec with Matchers with PropertyChecks {
 
     "pass RedisCache" should {
       tests[Task](() => RedisCache(redisConfiguration, Some(1 day)))(_.runSyncUnsafe(10 seconds))
+    }
+
+    "pass NoCache" should {
+      noCacheTests[Task](_.runSyncUnsafe(10 seconds))
     }
   }
 

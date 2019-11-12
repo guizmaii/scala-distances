@@ -136,7 +136,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
           }
 
           "take into account traffic when asked to with a driving travel mode and a best guess estimation" in {
-            val expected        = Map(Driving -> Right(Distance(length, travelDuration + 5.minutes)))
+            val expected        = Map(Driving -> Right(Distance(length, 5.minutes)))
             val trafficHandling = TrafficHandling(Instant.now, TrafficModel.BestGuess)
 
             val result = runSync(distanceApi.distance(origin, destination, Driving :: Nil, Some(trafficHandling)))
@@ -146,7 +146,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
           }
 
           "take into account traffic when asked to with a driving travel mode and an optimistic estimation" in {
-            val expected        = Map(Driving -> Right(Distance(length, travelDuration + 2.minutes)))
+            val expected        = Map(Driving -> Right(Distance(length, 2.minutes)))
             val trafficHandling = TrafficHandling(Instant.now, TrafficModel.Optimistic)
 
             val result = runSync(distanceApi.distance(origin, destination, Driving :: Nil, Some(trafficHandling)))
@@ -156,7 +156,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
           }
 
           "take into account traffic when asked to with a driving travel mode and a pessimistic estimation" in {
-            val expected        = Map(Driving -> Right(Distance(length, travelDuration + 10.minutes)))
+            val expected        = Map(Driving -> Right(Distance(length, 10.minutes)))
             val trafficHandling = TrafficHandling(Instant.now, TrafficModel.Pessimistic)
 
             val result = runSync(distanceApi.distance(origin, destination, Driving :: Nil, Some(trafficHandling)))
@@ -192,7 +192,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
             removeBatchFromCache(Driving, origins, destinations, None)
           }
 
-          "not call for new computations when already cached" in {
+          "not call for new computations when already cached with batch" in {
             val origins      = List(LatLong(48.86, 2.3))
             val destinations = List(LatLong(48.85, 2.3), LatLong(48.84, 2.3))
 
@@ -215,6 +215,41 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
             knownEntries.values.forall(_.isRight) shouldBe true
             unknownEntries.values.forall(_.isLeft) shouldBe true
+
+            removeBatchFromCache(Driving, origins, destinations, None)
+          }
+
+          "not call for new computations when already cached with single calls" in {
+            val origins      = List(LatLong(48.86, 2.3))
+            val destinations = List(LatLong(48.85, 2.3), LatLong(48.84, 2.3))
+            val paths        = origins.flatMap(origin => destinations.map(origin -> _))
+
+            val results = paths
+              .map { case (o, d) => distanceApi.distance(o, d, List(Driving), None) }
+              .map(runSync(_).asInstanceOf[Map[TravelMode, Either[Unit, Distance]]])
+
+            results.map(_.mapValues(ignoreDistanceValue)) should contain only Map(Driving -> right)
+            results.forall(_.apply(Driving).isRight) shouldBe true
+
+            val moreOrigins      = origins :+ LatLong(48.86, 2.4)
+            val moreDestinations = destinations :+ LatLong(48.83, 2.3)
+            val morePaths        = moreOrigins.flatMap(origin => moreDestinations.map(origin -> _))
+
+            val moreResults = morePaths.map {
+              case (o, d) =>
+                Segment(o, d) -> runSync(errorDistanceApi.distance(o, d, List(Driving), None))
+                  .asInstanceOf[Map[TravelMode, Either[Unit, Distance]]]
+            }.toMap
+
+            val knownEntries =
+              moreResults.filterKeys(path => origins.contains(path.origin) && destinations.contains(path.destination))
+
+            val unknownEntries = moreResults.filterKeys(!knownEntries.contains(_))
+
+            knownEntries.values.map(_.mapValues(ignoreDistanceValue)) should contain only Map(Driving -> right)
+            knownEntries.values.map(_.apply(Driving)).forall(_.isRight) shouldBe true
+            unknownEntries.values.map(_.mapValues(ignoreDistanceValue)) should contain only Map(Driving -> left)
+            unknownEntries.values.map(_.apply(Driving)).forall(_.isLeft) shouldBe true
 
             removeBatchFromCache(Driving, origins, destinations, None)
           }
@@ -282,4 +317,8 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
       }
     }
   }
+
+  private def ignoreDistanceValue(e: Either[Unit, Distance]): Either[Unit, Unit] = e.map(_ => ())
+  private val right: Either[Unit, Unit]                                          = Right[Unit, Unit](())
+  private val left: Either[Unit, Unit]                                           = Left[Unit, Unit](())
 }

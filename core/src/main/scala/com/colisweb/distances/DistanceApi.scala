@@ -184,12 +184,14 @@ class DistanceApi[F[_]: Async: Parallel, E](
       maybeTrafficHandling: Option[TrafficHandling]
   ): F[List[(DirectedPath, Either[E, Distance])]] =
     modes.parTraverse { mode =>
-      distanceF(mode, origin, destination, maybeTrafficHandling).flatMap { errorOrDistance =>
-        val eitherF: F[Either[E, Distance]] =
-          maybeUpdateCache(errorOrDistance, mode, origin, destination, maybeTrafficHandling)
-
-        (DirectedPath(origin, destination, mode, maybeTrafficHandling).pure[F] -> eitherF).bisequence
-      }
+      for {
+        cached <- getCached(decoder, mode, origin, destination, maybeTrafficHandling)
+        errorOrDistance <- cached match {
+          case Some(value) => Either.right[E, Distance](value).pure[F]
+          case None        => distanceF(mode, origin, destination, maybeTrafficHandling)
+        }
+        result <- maybeUpdateCache(errorOrDistance, mode, origin, destination, maybeTrafficHandling)
+      } yield DirectedPath(origin, destination, mode, maybeTrafficHandling) -> result
     }
 
   private def maybeUpdateCache(

@@ -4,6 +4,25 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 More infos about this file : http://keepachangelog.com/
 
+## [v3.0.4] - 2019.11.12
+* Fix for `GoogleDistanceProvider`: stop adding the traffic duration to the default duration: consider it as a full 
+travel duration value and not only the in-traffic offset. 
+* Update dependencies:
+    * Monix 3.1.0
+    * Squants 1.5.0
+    * scalafmt-core 2.2.2
+
+## [v3.0.3] - 2019.11.06
+* Fix for `Google Geoprovider`: using `address` parameter instead of `components` for 
+postal code geocoding to succeed in some not working cases.
+* Update minor dependencies.
+
+## [v3.0.2] - 2019.10.17
+* Fix: the no-cache module was throwing an exception on methods besides `cachingF`.
+
+## [v3.0.1] - 2019.10.09
+* Fix: cache was not read any more on single distance calls.
+
 ## [v3.0.0] - 2019.09.16
 * Update dependencies 
     * cats 2.0.0 : Bring breaking changes. Please refer to the cats' documentation

@@ -14,12 +14,12 @@ ThisBuild / scalafmtSbtCheck := true
 
 val scalaCacheVersion = "0.26.0"
 
-lazy val googleMaps               = "com.google.maps"      % "google-maps-services" % "0.9.4"
-lazy val squants                  = "org.typelevel"        %% "squants"             % "1.4.0"
+lazy val googleMaps               = "com.google.maps"      % "google-maps-services" % "0.10.1"
+lazy val squants                  = "org.typelevel"        %% "squants"             % "1.5.0"
 lazy val cats                     = "org.typelevel"        %% "cats-core"           % "2.0.0"
 lazy val catsEffect               = "org.typelevel"        %% "cats-effect"         % "2.0.0"
 lazy val enumeratum               = "com.beachape"         %% "enumeratum"          % "1.5.13"
-lazy val monix                    = "io.monix"             %% "monix"               % "3.0.0"
+lazy val monix                    = "io.monix"             %% "monix"               % "3.1.0"
 lazy val okHttpLoggingInterceptor = "com.squareup.okhttp3" % "logging-interceptor"  % "4.1.0"
 
 lazy val circeVersion       = "0.12.1"
