@@ -136,7 +136,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
           }
 
           "take into account traffic when asked to with a driving travel mode and a best guess estimation" in {
-            val expected        = Map(Driving -> Right(Distance(length, travelDuration + 5.minutes)))
+            val expected        = Map(Driving -> Right(Distance(length, 5.minutes)))
             val trafficHandling = TrafficHandling(Instant.now, TrafficModel.BestGuess)
 
             val result = runSync(distanceApi.distance(origin, destination, Driving :: Nil, Some(trafficHandling)))
@@ -146,7 +146,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
           }
 
           "take into account traffic when asked to with a driving travel mode and an optimistic estimation" in {
-            val expected        = Map(Driving -> Right(Distance(length, travelDuration + 2.minutes)))
+            val expected        = Map(Driving -> Right(Distance(length, 2.minutes)))
             val trafficHandling = TrafficHandling(Instant.now, TrafficModel.Optimistic)
 
             val result = runSync(distanceApi.distance(origin, destination, Driving :: Nil, Some(trafficHandling)))
@@ -156,7 +156,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
           }
 
           "take into account traffic when asked to with a driving travel mode and a pessimistic estimation" in {
-            val expected        = Map(Driving -> Right(Distance(length, travelDuration + 10.minutes)))
+            val expected        = Map(Driving -> Right(Distance(length, 10.minutes)))
             val trafficHandling = TrafficHandling(Instant.now, TrafficModel.Pessimistic)
 
             val result = runSync(distanceApi.distance(origin, destination, Driving :: Nil, Some(trafficHandling)))

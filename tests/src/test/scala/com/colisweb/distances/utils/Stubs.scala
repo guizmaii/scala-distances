@@ -109,22 +109,19 @@ object Stubs {
     val travelDuration = (distance / KilometersPerHour(50)).toSeconds.seconds
 
     val trafficDuration =
-      maybeTrafficHandling match {
-        case Some(TrafficHandling(_, trafficModel)) =>
-          mode match {
-            case TravelMode.Driving =>
-              trafficModel match {
-                case TrafficModel.BestGuess   => 5.minutes
-                case TrafficModel.Optimistic  => 2.minutes
-                case TrafficModel.Pessimistic => 10.minutes
-              }
-
-            case _ => 0.minute
+      mode match {
+        case TravelMode.Driving =>
+          maybeTrafficHandling.map { trafficHandling =>
+            trafficHandling.trafficModel match {
+              case TrafficModel.BestGuess   => 5.minutes
+              case TrafficModel.Optimistic  => 2.minutes
+              case TrafficModel.Pessimistic => 10.minutes
+            }
           }
 
-        case None => 0.minute
+        case _ => None
       }
 
-    Distance(distance, travelDuration + trafficDuration)
+    Distance(distance, trafficDuration.getOrElse(travelDuration))
   }
 }

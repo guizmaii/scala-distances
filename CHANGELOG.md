@@ -4,6 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 More infos about this file : http://keepachangelog.com/
 
+## [v3.0.4] - 2019.11.12
+* Fix for `GoogleDistanceProvider`: stop adding the traffic duration to the default duration: consider it as a full 
+travel duration value and not only the in-traffic offset. 
+
 ## [v3.0.3] - 2019.11.06
 * Fix for `Google Geoprovider`: using `address` parameter instead of `components` for 
 postal code geocoding to succeed in some not working cases.

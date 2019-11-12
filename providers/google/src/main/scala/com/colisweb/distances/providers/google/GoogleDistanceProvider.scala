@@ -165,13 +165,13 @@ object GoogleDistanceProvider {
     } yield {
       element.status match {
         case OK =>
-          val durationInTraffic = Option(element.durationInTraffic).map(_.inSeconds seconds).getOrElse(0 seconds)
+          val durationInTraffic = Option(element.durationInTraffic).map(_.inSeconds seconds)
           val travelDuration    = element.duration.inSeconds seconds
 
           OK -> Some(
             Distance(
               length = element.distance.inMeters meters,
-              duration = travelDuration.plus(durationInTraffic)
+              duration = durationInTraffic.getOrElse(travelDuration)
             )
           )
 
