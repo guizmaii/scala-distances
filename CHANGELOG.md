@@ -11,6 +11,7 @@ travel duration value and not only the in-traffic offset.
     * Monix 3.1.0
     * Squants 1.5.0
     * scalafmt-core 2.2.2
+    * scalacheck 1.14.2
 
 ## [v3.0.3] - 2019.11.06
 * Fix for `Google Geoprovider`: using `address` parameter instead of `components` for 
