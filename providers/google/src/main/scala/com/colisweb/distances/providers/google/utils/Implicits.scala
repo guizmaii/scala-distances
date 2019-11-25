@@ -1,6 +1,6 @@
 package com.colisweb.distances.providers.google.utils
 
-import cats.MonadError
+import cats.{MonadError, Parallel}
 import cats.effect.Concurrent
 import com.colisweb.distances.{TrafficModel, TravelMode}
 import com.colisweb.distances.TrafficModel.{BestGuess, Optimistic, Pessimistic}
@@ -9,7 +9,11 @@ import com.colisweb.distances.Types.LatLong
 import com.google.maps.PendingResult
 import com.google.maps.model.TrafficModel.{BEST_GUESS, OPTIMISTIC, PESSIMISTIC}
 import com.google.maps.model.TravelMode.{BICYCLING, DRIVING, TRANSIT, UNKNOWN, WALKING}
-import com.google.maps.model.{TrafficModel => GoogleTrafficModel, TravelMode => GoogleTravelMode, LatLng => GoogleLatLong}
+import com.google.maps.model.{
+  LatLng => GoogleLatLong,
+  TrafficModel => GoogleTrafficModel,
+  TravelMode => GoogleTravelMode
+}
 
 private[google] object Implicits {
 
@@ -27,7 +31,6 @@ private[google] object Implicits {
 
   implicit final class Tuple3AsyncOps[F[_], A](val instance: (F[A], F[A], F[A])) {
     import cats.implicits._
-    import cats.temp.par._
 
     /**
       * Launch the 3 Tasks side effects in parallele but returns the result in order:
@@ -38,7 +41,7 @@ private[google] object Implicits {
       * else return the error of last one.
       *
       */
-    def raceInOrder3(implicit F: MonadError[F, Throwable], par: Par[F]): F[A] = {
+    def raceInOrder3(implicit F: MonadError[F, Throwable], par: Parallel[F]): F[A] = {
       val (a, b, c) = instance
       (a.attempt, b.attempt, c.attempt).parTupled
         .flatMap {

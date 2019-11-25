@@ -20,7 +20,8 @@ abstract class QuantitySerializer[A <: Quantity[A]] {
   private final lazy val symbolToUnit: String => Option[UnitOfMeasure[A]] =
     dimension.units.map(u => u.symbol -> u).toMap.get
 
-  implicit final lazy val quantityEncoder: Encoder[A] = Encoder.instance(a => Json.obj("value" := a.value, "unit" := a.unit.symbol))
+  implicit final lazy val quantityEncoder: Encoder[A] =
+    Encoder.instance(a => Json.obj("value" := a.value, "unit" := a.unit.symbol))
 
   implicit final lazy val quantityDecoder: Decoder[A] = Decoder.instance { c =>
     (c.downField("value").as[Double], c.downField("unit").as[String]).tupled.flatMap {

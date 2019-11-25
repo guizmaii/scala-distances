@@ -6,7 +6,8 @@ import scala.concurrent.duration.Duration
 
 object ScalaDurationSerializer {
 
-  implicit final val durationEncoder: Encoder[Duration] = Encoder.instance(duration => Json.fromString(duration.toString))
+  implicit final val durationEncoder: Encoder[Duration] =
+    Encoder.instance(duration => Json.fromString(duration.toString))
 
   /**
     * (strongly) Inspired by circe-java8 `java.time.Duration` Decoder.

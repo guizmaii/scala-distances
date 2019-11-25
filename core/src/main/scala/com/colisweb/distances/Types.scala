@@ -34,7 +34,8 @@ object Types {
   object NonAmbiguousAddress {
     implicit final val show: Show[NonAmbiguousAddress] =
       new Show[NonAmbiguousAddress] {
-        override def show(a: NonAmbiguousAddress): String = s"${a.line1}, ${a.line2}, ${a.postalCode} ${a.town} ${a.country}"
+        override def show(a: NonAmbiguousAddress): String =
+          s"${a.line1}, ${a.line2}, ${a.postalCode} ${a.town} ${a.country}"
       }
   }
 
@@ -81,4 +82,6 @@ object Types {
   )
 
   final case class TrafficHandling(departureTime: Instant, trafficModel: TrafficModel)
+
+  final case class Segment(origin: LatLong, destination: LatLong)
 }

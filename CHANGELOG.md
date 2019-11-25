@@ -4,6 +4,59 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 More infos about this file : http://keepachangelog.com/
 
+## [???] - 2019.11.25
+* Update dependencies
+
+## [v3.0.4] - 2019.11.12
+* Fix for `GoogleDistanceProvider`: stop adding the traffic duration to the default duration: consider it as a full 
+travel duration value and not only the in-traffic offset. 
+* Update dependencies:
+    * Monix 3.1.0
+    * Squants 1.5.0
+    * scalafmt-core 2.2.2
+    * scalacheck 1.14.2
+
+## [v3.0.3] - 2019.11.06
+* Fix for `Google Geoprovider`: using `address` parameter instead of `components` for 
+postal code geocoding to succeed in some not working cases.
+* Update minor dependencies.
+
+## [v3.0.2] - 2019.10.17
+* Fix: the no-cache module was throwing an exception on methods besides `cachingF`.
+
+## [v3.0.1] - 2019.10.09
+* Fix: cache was not read any more on single distance calls.
+
+## [v3.0.0] - 2019.09.16
+* Update dependencies 
+    * cats 2.0.0 : Bring breaking changes. Please refer to the cats' documentation
+    * cats-effect 2.0.0
+    * circe 0.12.1
+    * circe-optics 0.12.0
+    * monix 3.0.0 : Used only in tests
+
+## [v2.0.0] - 2019.09.05
+
+* Add `Cache` methods:
+    * `caching`: like `cachingF` but with an input value `V` instead of a wrapped value `F[V]`.
+    * `get`: retrieve the value wrapped as a `F[Option[V]]`.
+    * `remove`: remove a key from the cache, returns `F[Unit]`. Used in the tests only.
+    * `removeAll`: remove all keys from the cache, returns `F[Unit]`. Was used before in the tests, but is replaced 
+    now with `removed`.
+* `DistanceApi` now returns `Map`s of values `Either[E, Distance]` (previously `Distance`) to embed errors related to 
+the distance computation (e.g. no route available). The error type has to be specified and is related to the 
+distance provider. It also supports batched calls for distances (taking as input multiple origins and destinations), 
+and tries to make as few calls as possible, depending on the already cached values. This involves the following changes:
+    * Add arguments to `DistanceApi`
+        * `Caching[F, Distance]` which is an alias for 
+        `(Distance, Decoder[Distance], Encoder[Distance], Any*) => F[Distance]`.
+        * `GetCached[F, Distance]` which is an alias for `(Decoder[Distance], Any*) => F[Option[Distance]]`.
+    * Remove `CachingF[F, Distance]` argument from `DistanceApi`.
+    * Add type parameter to `DistanceApi`: it is now `DistanceApi[F[_]: Async: Par, E]`.
+    * Add `batchDistances` method to `DistanceApi` and `GoogleDistanceProvider`.
+    * Add Google error type `GoogleDistanceProviderError` (plus implementations). `GoogleDistanceProvider` now extends as 
+    `DistanceProvider[F, GoogleDistanceProviderError]`.
+
 ## [v1.1.0] - 2019.08.26
 
 * Add a function to `GoogleGeoApiContext` to handle logging of HTTP calls from Google Maps with 

@@ -14,23 +14,23 @@ ThisBuild / scalafmtSbtCheck := true
 
 val scalaCacheVersion = "0.28.0"
 
-lazy val googleMaps      = "com.google.maps"   % "google-maps-services" % "0.9.4"
-lazy val squants         = "org.typelevel"     %% "squants"             % "1.4.0"
-lazy val cats            = "org.typelevel"     %% "cats-core"           % "1.6.1"
-lazy val `cats-effect`   = "org.typelevel"     %% "cats-effect"         % "1.4.0"
-lazy val `cats-par`      = "io.chrisdavenport" %% "cats-par"            % "0.2.1"
-lazy val enumeratum      = "com.beachape"      %% "enumeratum"          % "1.5.13"
-lazy val monix           = "io.monix"          %% "monix"               % "3.0.0-RC2"
-lazy val okHttpLoggingInterceptor = "com.squareup.okhttp3" % "logging-interceptor" % "4.1.0"
+lazy val googleMaps               = "com.google.maps"      % "google-maps-services" % "0.10.1"
+lazy val squants                  = "org.typelevel"        %% "squants"             % "1.5.0"
+lazy val cats                     = "org.typelevel"        %% "cats-core"           % "2.0.0"
+lazy val catsEffect               = "org.typelevel"        %% "cats-effect"         % "2.0.0"
+lazy val enumeratum               = "com.beachape"         %% "enumeratum"          % "1.5.13"
+lazy val monix                    = "io.monix"             %% "monix"               % "3.1.0"
+lazy val okHttpLoggingInterceptor = "com.squareup.okhttp3" % "logging-interceptor"  % "4.1.1"
 
-lazy val circeVersion      = "0.11.0"
+lazy val circeVersion       = "0.12.1"
+lazy val circeOpticsVersion = "0.12.0"
 
 lazy val circeCore          = "io.circe" %% "circe-core"           % circeVersion
 lazy val circeGeneric       = "io.circe" %% "circe-generic"        % circeVersion
 lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % circeVersion
 lazy val circeParser        = "io.circe" %% "circe-parser"         % circeVersion
 lazy val circeRefined       = "io.circe" %% "circe-refined"        % circeVersion
-lazy val circeOptics        = "io.circe" %% "circe-optics"         % circeVersion
+lazy val circeOptics        = "io.circe" %% "circe-optics"         % circeOpticsVersion
 
 lazy val circeAll = Seq(circeCore, circeGeneric, circeGenericExtras, circeParser, circeRefined, circeOptics)
 
@@ -38,20 +38,23 @@ lazy val scalacacheCore =
   Seq(
     "com.github.cb372" %% "scalacache-core"        % scalaCacheVersion,
     "com.github.cb372" %% "scalacache-cats-effect" % scalaCacheVersion,
-    "com.github.cb372" %% "scalacache-circe"       % scalaCacheVersion,
+    "com.github.cb372" %% "scalacache-circe"       % scalaCacheVersion
   )
 
 lazy val testKit = {
-  val kantancsv = ((version: String) =>
-    Seq(
-      "com.nrinaudo" %% "kantan.csv"         % version,
-      "com.nrinaudo" %% "kantan.csv-cats"    % version,
-      "com.nrinaudo" %% "kantan.csv-generic" % version
-    ))("0.5.0")
+  val kantancsv = (
+      (version: String) =>
+        Seq(
+          "com.nrinaudo" %% "kantan.csv"         % version,
+          "com.nrinaudo" %% "kantan.csv-cats"    % version,
+          "com.nrinaudo" %% "kantan.csv-generic" % version
+        )
+    )("0.5.0")
 
   Seq(
-    "org.scalacheck" %% "scalacheck"            % "1.14.0",
-    "org.scalatest"  %% "scalatest"             % "3.0.5",
+    "org.scalacheck" %% "scalacheck"            % "1.14.2",
+    "org.scalatest"  %% "scalatest"             % "3.0.8",
+    "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2",
     "com.beachape"   %% "enumeratum-scalacheck" % "1.5.16",
     "io.circe"       %% "circe-literal"         % circeVersion,
     monix
@@ -73,11 +76,11 @@ lazy val core = project
     libraryDependencies ++= Seq(
       squants,
       cats,
-      `cats-effect`,
-      `cats-par`,
+      catsEffect,
       enumeratum,
       okHttpLoggingInterceptor
-    ) ++ scalacacheCore ++ circeAll ++ testKit)
+    ) ++ scalacacheCore ++ circeAll ++ testKit
+  )
 
 //// Providers
 

@@ -1,31 +1,38 @@
 package com.colisweb.distances.providers
 
+import cats.Parallel
 import cats.effect.{Concurrent, ContextShift, IO}
-import cats.temp.par.Par
 import com.colisweb.distances.GeoProvider
 import com.colisweb.distances.Types.{LatLong, NonAmbiguousAddress, PostalCode}
 import com.colisweb.distances.providers.google.{GoogleGeoApiContext, GoogleGeoProvider}
 import monix.eval.Task
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import shapeless.CNil
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
+class GoogleGeoProviderSpec extends AnyWordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
 
   val loggingF: String => Unit = (s: String) => println(s.replaceAll("key=([^&]*)&", "key=REDACTED&"))
 
   lazy val geoContext: GoogleGeoApiContext = GoogleGeoApiContext(System.getenv().get("GOOGLE_API_KEY"), loggingF)
 
-  val lille                = LatLong(latitude = 50.6138111, longitude = 3.0423599)
-  val lambersart           = LatLong(latitude = 50.65583909999999, longitude = 3.0226977)
-  val harnes               = LatLong(latitude = 50.4515282, longitude = 2.9047234)
-  val artiguesPresBordeaux = LatLong(latitude = 44.84034490000001, longitude = -0.4408037)
+  val lille                = LatLong(50.6138111, 3.0423599)
+  val lambersart           = LatLong(50.65583909999999, 3.0226977)
+  val harnes               = LatLong(50.4515282, 2.9047234)
+  val artiguesPresBordeaux = LatLong(44.84034490000001, -0.4408037)
+  val paris01              = LatLong(48.8640493, 2.3310526)
+  val paris02              = LatLong(48.8675641, 2.34399)
+  val paris18              = LatLong(48.891305, 2.3529867)
+  val paris116             = LatLong(48.8582383, 2.2749434)
+  val merignac             = LatLong(44.8391346, -0.6867939)
 
-  def passTests[F[+ _]: Concurrent: Par](runSync: F[Any] => Any): Unit = {
+  def passTests[F[+ _]: Concurrent: Parallel](runSync: F[Any] => Any): Unit = {
 
     val geocoder: GeoProvider[F] = GoogleGeoProvider[F](geoContext)
 
@@ -42,17 +49,23 @@ class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures wit
         runSync(geocoder.geocode(postalCode)) shouldBe place
 
       "cache and return" should {
-        "Lille" in {
-          testGeocoder(PostalCode("59000"), lille)
-        }
-        "Lambersart" in {
-          testGeocoder(PostalCode("59130"), lambersart)
-        }
-        "Harnes" in {
-          testGeocoder(PostalCode("62440"), harnes)
-        }
-        "Artigues-près-Bordeaux" in {
-          testGeocoder(PostalCode("33370"), artiguesPresBordeaux)
+        val places = List(
+          ("Lille", "59000", lille),
+          ("Lambersart", "59130", lambersart),
+          ("Harnes", "62440", harnes),
+          ("Artigues-près-Bordeaux", "33370", artiguesPresBordeaux),
+          ("Paris 01", "75001", paris01),
+          ("Paris 02", "75002", paris02),
+          ("Paris 18", "75018", paris18),
+          ("Paris 116", "75116", paris116),
+          ("Mérignac", "33700", merignac)
+        )
+
+        places.foreach {
+          case (testName, postalCode, result) =>
+            testName in {
+              testGeocoder(PostalCode(postalCode), result)
+            }
         }
       }
     }
@@ -95,16 +108,16 @@ class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures wit
            |108 rue de Richelieu;75002;PARIS;48.8714406;2.3398815
            |24 AVENUE MARIE ALEXIS;76370;Saint-Martin-en-Campagne;49.96568550000001;1.196322
            |8 RUE FLEURS DE LYS;33370;Artigues-près-Bordeaux;44.8496786;-0.4831272
-           |8 RUE des FLEURS DE LYS;33370;Artigues-près-Bordeaux;44.8496786;-0.4831272
            |""".stripMargin.drop(1).dropRight(1)
 
       val data: Seq[(NonAmbiguousAddress, LatLong)] =
         rawData.unsafeReadCsv[List, TestAddress](rfc.withHeader.withCellSeparator(';')).map(_.toAddressAndLatLong)
 
-      def testNonAmbigueAddressGeocoder: ((NonAmbiguousAddress, LatLong)) => Unit = { (address: NonAmbiguousAddress, latLong: LatLong) =>
-        s"$address should be located at $latLong}" in {
-          runSync(geocoder.geocode(address)) shouldBe latLong
-        }
+      def testNonAmbigueAddressGeocoder: ((NonAmbiguousAddress, LatLong)) => Unit = {
+        (address: NonAmbiguousAddress, latLong: LatLong) =>
+          s"$address should be located at $latLong}" in {
+            runSync(geocoder.geocode(address)) shouldBe latLong
+          }
       }.tupled
 
       data.foreach(testNonAmbigueAddressGeocoder.apply)

@@ -6,10 +6,17 @@ import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types.{DirectedPathMultipleModes, LatLong}
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.breakOut
 
-class TraversableLikeOpsSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterEach with PrivateMethodTester {
+class TraversableLikeOpsSpec
+    extends AnyWordSpec
+    with Matchers
+    with ScalaFutures
+    with BeforeAndAfterEach
+    with PrivateMethodTester {
 
   "RichList#combineDuplicatesOn" should {
 
@@ -27,12 +34,18 @@ class TraversableLikeOpsSpec extends WordSpec with Matchers with ScalaFutures wi
       val a23 = DirectedPathMultipleModes(LatLong(42.0, 42.0), LatLong(43.0, 43.0), Driving :: Unknown :: Nil)
       val a24 = DirectedPathMultipleModes(LatLong(42.0, 42.0), LatLong(43.0, 43.0), Driving :: Unknown :: Nil)
 
-      val res = List(a00, a01, a11, a21, a22, a23, a24).combineDuplicatesOn { case DirectedPathMultipleModes(o, d, _, _) => (o, d) }(
+      val res = List(a00, a01, a11, a21, a22, a23, a24).combineDuplicatesOn {
+        case DirectedPathMultipleModes(o, d, _, _) => (o, d)
+      }(
         DistanceApi invokePrivate directedPathSemiGroup(),
         breakOut
       )
 
-      res.head shouldBe DirectedPathMultipleModes(LatLong(42.0, 42.0), LatLong(43.0, 43.0), Driving :: Bicycling :: Unknown :: Nil)
+      res.head shouldBe DirectedPathMultipleModes(
+        LatLong(42.0, 42.0),
+        LatLong(43.0, 43.0),
+        Driving :: Bicycling :: Unknown :: Nil
+      )
     }
     "remove duplicates and combine using the semigroup, BIS" in {
       val a00 = DirectedPathMultipleModes(LatLong(42.0, 42.0), LatLong(43.0, 43.0), Driving :: Nil)
