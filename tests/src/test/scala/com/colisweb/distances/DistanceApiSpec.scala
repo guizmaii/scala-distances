@@ -9,8 +9,10 @@ import com.colisweb.distances.Types._
 import com.colisweb.distances.caches.{CaffeineCache, RedisCache, RedisConfiguration}
 import com.colisweb.distances.providers.google.GoogleGeoApiContext
 import monix.eval.Task
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import squants.space.LengthConversions._
 import squants.space.Meters
 
@@ -18,7 +20,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
+class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
 
   import com.colisweb.distances.utils.Stubs._
 

@@ -13,14 +13,15 @@ import com.colisweb.distances.providers.google.{
 }
 import com.colisweb.distances.{DistanceProvider, TrafficModel}
 import monix.eval.Task
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import squants.space.LengthConversions._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class GoogleDistanceProviderSpec extends WordSpec with Matchers {
+class GoogleDistanceProviderSpec extends AnyWordSpec with Matchers {
 
   val loggingF: String => Unit = (s: String) => println(s.replaceAll("key=([^&]*)&", "key=REDACTED&"))
 

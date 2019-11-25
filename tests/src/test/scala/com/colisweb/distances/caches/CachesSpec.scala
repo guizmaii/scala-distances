@@ -6,8 +6,9 @@ import com.colisweb.distances.Types._
 import io.circe._
 import io.circe.generic.semiauto._
 import monix.eval.Task
-import org.scalatest.prop.PropertyChecks
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import squants.space.Length
 
 import scala.concurrent.duration._
@@ -25,7 +26,7 @@ object Toto {
   implicit final val Encoder: Encoder[Toto] = deriveEncoder[Toto]
 }
 
-class CacheSpec extends WordSpec with Matchers with PropertyChecks {
+class CacheSpec extends AnyWordSpec with Matchers with ScalaCheckPropertyChecks {
 
   import com.colisweb.distances.generators.Gens._
   import com.colisweb.distances.utils.circe.LengthSerializer._

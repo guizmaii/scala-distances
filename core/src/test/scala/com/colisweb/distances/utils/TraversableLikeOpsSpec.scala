@@ -6,11 +6,13 @@ import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types.{DirectedPathMultipleModes, LatLong}
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
 import scala.collection.breakOut
 
 class TraversableLikeOpsSpec
-    extends WordSpec
+    extends AnyWordSpec
     with Matchers
     with ScalaFutures
     with BeforeAndAfterEach

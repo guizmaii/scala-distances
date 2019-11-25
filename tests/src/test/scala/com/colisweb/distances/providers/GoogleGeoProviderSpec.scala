@@ -8,13 +8,15 @@ import com.colisweb.distances.providers.google.{GoogleGeoApiContext, GoogleGeoPr
 import monix.eval.Task
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import shapeless.CNil
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
+class GoogleGeoProviderSpec extends AnyWordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
 
   val loggingF: String => Unit = (s: String) => println(s.replaceAll("key=([^&]*)&", "key=REDACTED&"))
 
@@ -106,7 +108,6 @@ class GoogleGeoProviderSpec extends WordSpec with Matchers with ScalaFutures wit
            |108 rue de Richelieu;75002;PARIS;48.8714406;2.3398815
            |24 AVENUE MARIE ALEXIS;76370;Saint-Martin-en-Campagne;49.96568550000001;1.196322
            |8 RUE FLEURS DE LYS;33370;Artigues-près-Bordeaux;44.8496786;-0.4831272
-           |8 RUE des FLEURS DE LYS;33370;Artigues-près-Bordeaux;44.8496786;-0.4831272
            |""".stripMargin.drop(1).dropRight(1)
 
       val data: Seq[(NonAmbiguousAddress, LatLong)] =
