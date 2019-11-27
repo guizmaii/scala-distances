@@ -22,6 +22,9 @@ object FallbackBatch {
         Monad[F].pure(values)
       }
     }
+}
+
+object FallbackBatchOption {
 
   def apply[F[_]: Monad, E, R](
       first: Distances.BuilderBatchOption[F, R],
@@ -40,4 +43,5 @@ object FallbackBatch {
         Monad[F].pure(values)
       }
     }
+
 }

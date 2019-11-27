@@ -1,23 +1,22 @@
 package com.colisweb.distances.re
 import cats.Id
 import com.colisweb.distances.re.model.Path
-import com.colisweb.distances.re.util.{StaticDistanceApi, StaticDistanceOptionApi, TestTypes, TestValues}
+import com.colisweb.distances.re.util.{FromMapDistances, TestTypes, TestValues}
 import org.scalatest.{Matchers, WordSpec}
 
 class FallbackSpec extends WordSpec with Matchers {
-  import com.colisweb.distances.re.builder.DistanceApiBuilder.Builder
   import TestValues._
+  import builder.base._
+
+  private val firstError  = TestTypes.FirstError("oh noes")
+  private val secondError = TestTypes.SecondError("boom")
 
   "Fallback" should {
 
     "call second when first returns an explicit error" in {
-      val path12 = Path(p1, p2, pp)
-      val first = StaticDistanceApi[Id, TestTypes.ErrorBis](
-        path12 -> Left(TestTypes.ErrorBis("oh noes"))
-      )
-      val second = StaticDistanceApi[Id, TestTypes.Error](
-        path12 -> Right(d12)
-      )
+      val path12   = Path(p1, p2, pp)
+      val first    = FromMapDistances[Id].emptyAndError(firstError)
+      val second   = FromMapDistances[Id].fromMapOrError(secondError, path12 -> d12)
       val distance = first.fallback(second).apply(path12)
 
       distance shouldBe Right(d12)
@@ -25,10 +24,8 @@ class FallbackSpec extends WordSpec with Matchers {
 
     "not call second when first returns a result" in {
       val path12 = Path(p1, p2, pp)
-      val first = StaticDistanceApi[Id, TestTypes.ErrorBis](
-        path12 -> Right(d12)
-      )
-      val second = StaticDistanceApi.empty[Id, TestTypes.Error]
+      val first  = FromMapDistances[Id].fromMapOrError(firstError, path12 -> d12)
+      val second = FromMapDistances[Id].emptyAndError(secondError)
 
       val distance = first.fallback(second).apply(path12)
       distance shouldBe Right(d12)
@@ -36,15 +33,11 @@ class FallbackSpec extends WordSpec with Matchers {
 
     "return second's error when it also failed" in {
       val path12 = Path(p1, p2, pp)
-      val first = StaticDistanceApi[Id, TestTypes.ErrorBis](
-        path12 -> Left(TestTypes.ErrorBis("oh noes"))
-      )
-      val second = StaticDistanceApi[Id, TestTypes.Error](
-        path12 -> Left(TestTypes.Error("boom"))
-      )
+      val first  = FromMapDistances[Id].emptyAndError(firstError)
+      val second = FromMapDistances[Id].emptyAndError(secondError)
 
       val distance = first.fallback(second).apply(path12)
-      distance shouldBe Left(TestTypes.Error("boom"))
+      distance shouldBe Left(secondError)
     }
   }
 
@@ -52,39 +45,29 @@ class FallbackSpec extends WordSpec with Matchers {
 
     "call second when first returns an explicit error" in {
       val path12 = Path(p1, p2, pp)
-      val first = StaticDistanceOptionApi[Id](
-        path12 -> None
-      )
-      val second = StaticDistanceApi[Id, TestTypes.Error](
-        path12 -> Right(d12)
-      )
+      val first  = FromMapDistances[Id].empty
+      val second = FromMapDistances[Id].fromMapOrError(secondError, path12 -> d12)
 
-      val distance = Fallback(first, second).apply(path12)
+      val distance = first.fallback(second).apply(path12)
       distance shouldBe Right(d12)
     }
 
     "not call second when first returns a result" in {
       val path12 = Path(p1, p2, pp)
-      val first = StaticDistanceOptionApi[Id](
-        path12 -> Some(d12)
-      )
-      val second = StaticDistanceApi.empty[Id, TestTypes.Error]
+      val first  = FromMapDistances[Id].fromMap(path12 -> d12)
+      val second = FromMapDistances[Id].emptyAndError(secondError)
 
-      val distance = Fallback(first, second).apply(path12)
+      val distance = FallbackOption(first, second).apply(path12)
       distance shouldBe Right(d12)
     }
 
     "return second's error when it also failed" in {
       val path12 = Path(p1, p2, pp)
-      val first = StaticDistanceOptionApi[Id](
-        path12 -> None
-      )
-      val second = StaticDistanceApi[Id, TestTypes.Error](
-        path12 -> Left(TestTypes.Error("boom"))
-      )
+      val first  = FromMapDistances[Id].empty
+      val second = FromMapDistances[Id].emptyAndError(secondError)
 
-      val distance = Fallback(first, second).apply(path12)
-      distance shouldBe Left(TestTypes.Error("boom"))
+      val distance = FallbackOption(first, second).apply(path12)
+      distance shouldBe Left(secondError)
     }
   }
 }

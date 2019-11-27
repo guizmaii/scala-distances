@@ -3,7 +3,7 @@ import com.colisweb.distances.re.model.Point
 
 object Haversine {
 
-  def distance(origin: Point, destination: Point): Double = {
+  def distanceInKm(origin: Point, destination: Point): Double = {
     import scala.math._
 
     val deltaLat = toRadians(destination.latitude - origin.latitude)

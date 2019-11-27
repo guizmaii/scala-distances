@@ -6,10 +6,10 @@ import scala.concurrent.duration._
 
 object TestValues {
 
-  val p1  = Point(11.1, 22.2)
-  val p2  = Point(33.3, 44.4)
+  val p1 = Point(11.1, 22.2)
+  val p2 = Point(33.3, 44.4)
 
-  val pp  = TestTypes.IdParam("a")
+  val pp = TestTypes.IdParam("a")
 
   val d12 = DistanceAndDuration(Kilometers(10), 11.seconds)
 }

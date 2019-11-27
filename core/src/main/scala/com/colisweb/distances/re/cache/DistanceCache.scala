@@ -12,22 +12,23 @@ object DistanceCache {
     Kleisli(cache.get)
 
   def update[F[_]: Monad, E, R](
-    api: Distances.Builder[F, E, R],
-    cacheSet: CacheSet[F, Path[R], DistanceAndDuration]
+      api: Distances.Builder[F, E, R],
+      cacheSet: CacheSet[F, Path[R], DistanceAndDuration]
   ): Distances.Builder[F, E, R] =
-    Kleisli(path =>
-      api(path).flatMap {
-        case Right(value)   => cacheSet.set(path, value).map(_ => Right(value))
-        case left @ Left(_) => Monad[F].pure(left)
-      }
+    Kleisli(
+      path =>
+        api(path).flatMap {
+          case Right(value)   => cacheSet.set(path, value).map(_ => Right(value))
+          case left @ Left(_) => Monad[F].pure(left)
+        }
     )
 }
 
 object DistanceCacheBatch {
 
   def sequential[F[_]: Monad, E, R](
-    api: Distances.BuilderBatch[F, E, R],
-    cacheSet: CacheSet[F, Path[R], DistanceAndDuration]
+      api: Distances.BuilderBatch[F, E, R],
+      cacheSet: CacheSet[F, Path[R], DistanceAndDuration]
   ): Distances.BuilderBatch[F, E, R] =
     api.andThen { results =>
       results
@@ -38,8 +39,8 @@ object DistanceCacheBatch {
     }
 
   def parallel[F[_]: Monad: Parallel, E, O](
-    api: Distances.BuilderBatch[F, E, O],
-    cacheSet: CacheSet[F, Path[O], DistanceAndDuration]
+      api: Distances.BuilderBatch[F, E, O],
+      cacheSet: CacheSet[F, Path[O], DistanceAndDuration]
   ): Distances.BuilderBatch[F, E, O] =
     api.andThen { results =>
       results
