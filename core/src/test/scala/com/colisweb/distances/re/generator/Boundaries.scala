@@ -1,11 +1,14 @@
 package com.colisweb.distances.re.generator
 
 import com.colisweb.distances.re.model.Point
+import scala.concurrent.duration._
 
 object Boundaries {
 
-  val minSpeedKmh: Double   = 0.0d
-  val lightSpeedKmh: Double = 300000.0d * 3600
+  val minSpeedKmh: Double      = 0.0d
+  val lightSpeedKmh: Double    = 300000.0d * 3600
+  val maxDistanceMeters: Long  = 12000 * 1000
+  val maxDurationSeconds: Long = 72.hours.toSeconds
 
   val latitudeMin: Double  = -90.0d
   val latitudeMax: Double  = 90.0d

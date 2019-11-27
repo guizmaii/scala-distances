@@ -21,7 +21,6 @@ class HaversineSpec extends WordSpec with GeneratorDrivenPropertyChecks with Mat
       val point   = Point(latitude, longitudes._1)
       val closer  = Point(latitude, longitudes._2)
       val farther = Point(latitude, longitudes._3)
-      println(s"# $point $closer $farther")
       Haversine.distanceInKm(point, closer) should be <= Haversine.distanceInKm(point, farther)
     }
 

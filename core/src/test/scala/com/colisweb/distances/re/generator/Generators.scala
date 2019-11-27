@@ -1,10 +1,17 @@
 package com.colisweb.distances.re.generator
 
+import java.util.concurrent.TimeUnit
+
 import com.colisweb.distances.re.generator.Boundaries._
-import com.colisweb.distances.re.model.Point
+import com.colisweb.distances.re.generator.PointBoundaries._
+import com.colisweb.distances.re.model.Path.PathSimple
+import com.colisweb.distances.re.model.{DistanceAndDuration, Path, Point}
 import com.colisweb.distances.re.model.Point.{Latitude, Longitude}
 import org.scalacheck.Gen
-import squants.motion.{KilometersPerHour, Velocity}
+import squants.motion.{Distance, KilometersPerHour, Velocity}
+import squants.space.Meters
+
+import scala.concurrent.duration.FiniteDuration
 
 object Generators {
 
@@ -42,4 +49,30 @@ object Generators {
   def genSpeed: Gen[Velocity] =
     Gen.chooseNum(minSpeedKmh, lightSpeedKmh).map(d => KilometersPerHour(d))
 
+  def genDistance: Gen[Distance] =
+    Gen.chooseNum(0, maxDistanceMeters).map(Meters(_))
+
+  def genDuration: Gen[FiniteDuration] =
+    Gen.chooseNum(0, maxDurationSeconds).map(FiniteDuration(_, TimeUnit.SECONDS))
+
+  def genDistanceAndDurationUnrelated: Gen[DistanceAndDuration] =
+    for {
+      distance <- genDistance
+      duration <- genDuration
+    } yield DistanceAndDuration(distance, duration)
+
+  def genPathSimple: Gen[PathSimple] =
+    for {
+      origin      <- genPoint(World)
+      destination <- genPoint(World)
+    } yield Path(origin, destination)
+
+  def genPathSimpleAndDistanceUnrelated: Gen[(PathSimple, DistanceAndDuration)] =
+    for {
+      path                <- genPathSimple
+      distanceAndDuration <- genDistanceAndDurationUnrelated
+    } yield (path, distanceAndDuration)
+
+  def genPathSimpleAndDistanceUnrelatedSet: Gen[Map[PathSimple, DistanceAndDuration]] =
+    Gen.listOf(genPathSimpleAndDistanceUnrelated).map(_.toMap)
 }

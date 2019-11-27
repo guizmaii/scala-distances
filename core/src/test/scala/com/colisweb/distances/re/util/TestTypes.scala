@@ -2,9 +2,14 @@ package com.colisweb.distances.re.util
 
 object TestTypes {
 
-  case class Error(id: String)
-  case class FirstError(id: String)
-  case class SecondError(id: String)
+  sealed trait Error
+  case object Error extends Error
+
+  sealed trait FirstError
+  case object FirstError extends FirstError
+
+  sealed trait SecondError
+  case object SecondError extends SecondError
 
   case class IdParam(id: String)
 }
