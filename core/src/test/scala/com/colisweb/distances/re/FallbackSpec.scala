@@ -1,6 +1,9 @@
 package com.colisweb.distances.re
 import cats.Id
+import com.colisweb.distances.re.model.DistanceAndDuration
+import com.colisweb.distances.re.model.Path.PathSimple
 import com.colisweb.distances.re.util.{FromMapDistances, TestTypes}
+import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Matchers, WordSpec}
 
@@ -14,6 +17,25 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
   private val firstError  = TestTypes.FirstError
   private val secondError = TestTypes.SecondError
 
+  private def verifyDistanceForAllPathsMatchExpected(
+      distances: Distances.Builder[Id, TestTypes.SecondError.type, Unit],
+      mapping: Map[PathSimple, DistanceAndDuration]
+  ) = {
+    mapping.toList.map {
+      case (path, expected) =>
+        (path -> distances.apply(path)) shouldBe (path -> Right(expected))
+    }
+  }
+
+  private def verifyDistanceForAllPathsReturnsSecondError(
+      distances: Distances.Builder[Id, TestTypes.SecondError.type, Unit],
+      paths: List[PathSimple]
+  ) = {
+    paths.map { path =>
+      (path -> distances.apply(path)) shouldBe (path -> Left(secondError))
+    }
+  }
+
   "Fallback" should {
 
     "always return a value when first gives a result and second never" in forAll(
@@ -22,9 +44,7 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
       val first     = FromMapDistances[Id].fromMapOrError(firstError, mapping)
       val second    = FromMapDistances[Id].emptyAndError(secondError)
       val distances = first.fallback(second)
-      val paths     = mapping.keys.toList
-      val expected  = mapping.values.toList.map(Right(_))
-      paths.map(distances.apply) should contain theSameElementsInOrderAs expected
+      verifyDistanceForAllPathsMatchExpected(distances, mapping)
     }
 
     "always return a value when first never fives a result and second always" in forAll(
@@ -33,75 +53,68 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
       val first     = FromMapDistances[Id].emptyAndError(firstError)
       val second    = FromMapDistances[Id].fromMapOrError(secondError, mapping)
       val distances = first.fallback(second)
-      val paths     = mapping.keys.toList
-      val results   = mapping.values.toList.map(Right(_))
-      paths.map(distances.apply) should contain theSameElementsInOrderAs results
+      verifyDistanceForAllPathsMatchExpected(distances, mapping)
     }
 
-//    "always return a value when first or second give a result" in {
-//
-//    }
-//
-//    "never return a value when first and second never give a result" in {
-//
-//    }
-//
-//
-//    "call second when first returns an explicit error" in {
-//      val path12   = Path(p1, p2, pp)
-//      val first    = FromMapDistances[Id].emptyAndError(firstError)
-//      val second   = FromMapDistances[Id].fromMapOrError(secondError, path12 -> d12)
-//      val distance = first.fallback(second).apply(path12)
-//
-//      distance shouldBe Right(d12)
-//    }
-//
-//    "not call second when first returns a result" in {
-//      val path12 = Path(p1, p2, pp)
-//      val first  = FromMapDistances[Id].fromMapOrError(firstError, path12 -> d12)
-//      val second = FromMapDistances[Id].emptyAndError(secondError)
-//
-//      val distance = first.fallback(second).apply(path12)
-//      distance shouldBe Right(d12)
-//    }
-//
-//    "return second's error when it also failed" in {
-//      val path12 = Path(p1, p2, pp)
-//      val first  = FromMapDistances[Id].emptyAndError(firstError)
-//      val second = FromMapDistances[Id].emptyAndError(secondError)
-//
-//      val distance = first.fallback(second).apply(path12)
-//      distance shouldBe Left(secondError)
-//    }
-//  }
-//
-//  "FallbackOptional" should {
-//
-//    "call second when first returns an explicit error" in {
-//      val path12 = Path(p1, p2, pp)
-//      val first  = FromMapDistances[Id].empty
-//      val second = FromMapDistances[Id].fromMapOrError(secondError, path12 -> d12)
-//
-//      val distance = first.fallback(second).apply(path12)
-//      distance shouldBe Right(d12)
-//    }
-//
-//    "not call second when first returns a result" in {
-//      val path12 = Path(p1, p2, pp)
-//      val first  = FromMapDistances[Id].fromMap(path12 -> d12)
-//      val second = FromMapDistances[Id].emptyAndError(secondError)
-//
-//      val distance = FallbackOption(first, second).apply(path12)
-//      distance shouldBe Right(d12)
-//    }
-//
-//    "return second's error when it also failed" in {
-//      val path12 = Path(p1, p2, pp)
-//      val first  = FromMapDistances[Id].empty
-//      val second = FromMapDistances[Id].emptyAndError(secondError)
-//
-//      val distance = FallbackOption(first, second).apply(path12)
-//      distance shouldBe Left(secondError)
-//    }
+    "always return a value when first or second give a result" in forAll(
+      genPathSimpleAndDistanceUnrelatedSet,
+      genPathSimpleAndDistanceUnrelatedSet
+    ) { (mapping1, mapping2) =>
+      val first     = FromMapDistances[Id].fromMapOrError(firstError, mapping1)
+      val second    = FromMapDistances[Id].fromMapOrError(secondError, mapping2)
+      val distances = first.fallback(second)
+      // ++ order matters : if a path is present in both, value will be from mapping1
+      verifyDistanceForAllPathsMatchExpected(distances, mapping2 ++ mapping1)
+    }
+
+    "always return second's error when first and second never give a result" in forAll(
+      Gen.nonEmptyListOf(genPathSimple)
+    ) { paths =>
+      val first     = FromMapDistances[Id].emptyAndError(firstError)
+      val second    = FromMapDistances[Id].emptyAndError(secondError)
+      val distances = first.fallback(second)
+      verifyDistanceForAllPathsReturnsSecondError(distances, paths)
+    }
+  }
+
+  "FallbackOptional" should {
+
+    "always return a value when first gives a result and second never" in forAll(
+      genPathSimpleAndDistanceUnrelatedSet
+    ) { mapping =>
+      val first     = FromMapDistances[Id].fromMap(mapping)
+      val second    = FromMapDistances[Id].emptyAndError(secondError)
+      val distances = first.fallback(second)
+      verifyDistanceForAllPathsMatchExpected(distances, mapping)
+    }
+
+    "always return a value when first never fives a result and second always" in forAll(
+      genPathSimpleAndDistanceUnrelatedSet
+    ) { mapping =>
+      val first     = FromMapDistances[Id].empty
+      val second    = FromMapDistances[Id].fromMapOrError(secondError, mapping)
+      val distances = first.fallback(second)
+      verifyDistanceForAllPathsMatchExpected(distances, mapping)
+    }
+
+    "always return a value when first or second give a result" in forAll(
+      genPathSimpleAndDistanceUnrelatedSet,
+      genPathSimpleAndDistanceUnrelatedSet
+    ) { (mapping1, mapping2) =>
+      val first     = FromMapDistances[Id].fromMap(mapping1)
+      val second    = FromMapDistances[Id].fromMapOrError(secondError, mapping2)
+      val distances = first.fallback(second)
+      // ++ order matters : if a path is present in both, value will be from mapping1
+      verifyDistanceForAllPathsMatchExpected(distances, mapping2 ++ mapping1)
+    }
+
+    "always return second's error when first and second never give a result" in forAll(
+      Gen.nonEmptyListOf(genPathSimple)
+    ) { paths =>
+      val first     = FromMapDistances[Id].emptyAndError(firstError)
+      val second    = FromMapDistances[Id].emptyAndError(secondError)
+      val distances = first.fallback(second)
+      verifyDistanceForAllPathsReturnsSecondError(distances, paths)
+    }
   }
 }

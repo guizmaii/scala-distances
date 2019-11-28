@@ -1,5 +1,5 @@
 package com.colisweb.distances.re.builder
-import cats.{Functor, Monad, Parallel}
+import cats.{Monad, Parallel}
 import com.colisweb.distances.re._
 import com.colisweb.distances.re.cache._
 import com.colisweb.distances.re.model.{DistanceAndDuration, Path}
@@ -41,8 +41,8 @@ trait BaseBuilders {
 
   implicit class BatchBuilder[F[_]: Monad, E, R](builder: Distances.BuilderBatch[F, E, R]) {
 
-    def fallback[E2](fallbackApi: Distances.BuilderBatch[F, E2, R]): Distances.BuilderBatch[F, E2, R] =
-      FallbackBatch(builder, fallbackApi)
+    def fallback[E2](fallbackBuilder: Distances.BuilderBatch[F, E2, R]): Distances.BuilderBatch[F, E2, R] =
+      FallbackBatch(builder, fallbackBuilder)
 
     def adaptError[E2](adaptation: E => E2): Distances.BuilderBatch[F, E2, R] =
       AdaptErrorBatch(builder, adaptation)
@@ -60,22 +60,25 @@ trait BaseBuilders {
       FallbackOption(builder, fallbackBuilder)
   }
 
-  implicit class BatchOptionalBuilder[F[_]: Functor, R](buidler: Distances.BuilderBatchOption[F, R]) {
+  implicit class BatchOptionalBuilder[F[_]: Monad, R](builder: Distances.BuilderBatchOption[F, R]) {
 
     def nonOptional[E](error: => E): Distances.BuilderBatch[F, E, R] =
-      NonOptionalBatch(buidler)(error)
+      NonOptionalBatch(builder)(error)
+
+    def fallback[E](fallbackBuilder: Distances.BuilderBatch[F, E, R]): Distances.BuilderBatch[F, E, R] =
+      FallbackBatchOption(builder, fallbackBuilder)
   }
 }
 
 trait SequentialBuilders {
 
-  implicit class BatchSequentialBuilder[F[_]: Monad: Parallel, E, R](api: Distances.BuilderBatch[F, E, R]) {
+  implicit class BatchSequentialBuilder[F[_]: Monad, E, R](builder: Distances.BuilderBatch[F, E, R]) {
 
-    def fallback[E2](fallbackApi: Distances.Builder[F, E2, R]): Distances.BuilderBatch[F, E2, R] =
-      FallbackBatch(api, BatchSingle.sequential(fallbackApi))
+    def fallback[E2](fallbackBuilder: Distances.Builder[F, E2, R]): Distances.BuilderBatch[F, E2, R] =
+      FallbackBatch(builder, BatchSingle.sequential(fallbackBuilder))
 
     def fromCache(cache: CacheGet[F, Path[R], DistanceAndDuration]): Distances.BuilderBatch[F, E, R] =
-      FallbackBatchOption(BatchSingleOptional.sequential(DistanceCache.from(cache)), api)
+      FallbackBatchOption(BatchSingleOptional.sequential(DistanceCache.from(cache)), builder)
 
     def withCache(
         cacheGet: CacheGet[F, Path[R], DistanceAndDuration],
@@ -83,23 +86,35 @@ trait SequentialBuilders {
     ): Distances.BuilderBatch[F, E, R] =
       FallbackBatchOption(
         BatchSingleOptional.sequential[F, R](DistanceCache.from[F, R](cacheGet)),
-        DistanceCacheBatch.sequential[F, E, R](api, cacheSet)
+        DistanceCacheBatch.sequential[F, E, R](builder, cacheSet)
       )
 
     def withCache(cache: Cache[F, Path[R], DistanceAndDuration]): Distances.BuilderBatch[F, E, R] =
       withCache(cache, cache)
   }
+
+  implicit class BatchSequentialSingleBuilder[F[_]: Monad, E, R](builder: Distances.Builder[F, E, R]) {
+
+    def batched: Distances.BuilderBatch[F, E, R] =
+      BatchSingle.sequential(builder)
+  }
+
+  implicit class OptionalBatchSequentialSingleBuilder[F[_]: Monad, E, R](builder: Distances.BuilderOption[F, R]) {
+
+    def batched: Distances.BuilderBatchOption[F, R] =
+      BatchSingleOptional.sequential(builder)
+  }
 }
 
 trait ParallelBuilders {
 
-  implicit class BatchParallelBuilder[F[_]: Monad: Parallel, E, R](api: Distances.BuilderBatch[F, E, R]) {
+  implicit class BatchParallelBuilder[F[_]: Monad: Parallel, E, R](builder: Distances.BuilderBatch[F, E, R]) {
 
-    def fallback[E2](fallbackApi: Distances.Builder[F, E2, R]): Distances.BuilderBatch[F, E2, R] =
-      FallbackBatch(api, BatchSingle.parallel(fallbackApi))
+    def fallback[E2](fallbackBuilder: Distances.Builder[F, E2, R]): Distances.BuilderBatch[F, E2, R] =
+      FallbackBatch(builder, BatchSingle.parallel(fallbackBuilder))
 
     def fromCache(cache: CacheGet[F, Path[R], DistanceAndDuration]): Distances.BuilderBatch[F, E, R] =
-      FallbackBatchOption(BatchSingleOptional.parallel(DistanceCache.from(cache)), api)
+      FallbackBatchOption(BatchSingleOptional.parallel(DistanceCache.from(cache)), builder)
 
     def withCache(
         cacheGet: CacheGet[F, Path[R], DistanceAndDuration],
@@ -107,10 +122,24 @@ trait ParallelBuilders {
     ): Distances.BuilderBatch[F, E, R] =
       FallbackBatchOption(
         BatchSingleOptional.parallel[F, R](DistanceCache.from[F, R](cacheGet)),
-        DistanceCacheBatch.parallel[F, E, R](api, cacheSet)
+        DistanceCacheBatch.parallel[F, E, R](builder, cacheSet)
       )
 
     def withCache(cache: Cache[F, Path[R], DistanceAndDuration]): Distances.BuilderBatch[F, E, R] =
       withCache(cache, cache)
+  }
+
+  implicit class BatchParallelSingleBuilder[F[_]: Monad: Parallel, E, R](builder: Distances.Builder[F, E, R]) {
+
+    def batched: Distances.BuilderBatch[F, E, R] =
+      BatchSingle.parallel(builder)
+  }
+
+  implicit class OptionalBatchParallelSingleBuilder[F[_]: Monad: Parallel, E, R](
+      builder: Distances.BuilderOption[F, R]
+  ) {
+
+    def batched: Distances.BuilderBatchOption[F, R] =
+      BatchSingleOptional.parallel(builder)
   }
 }

@@ -75,4 +75,11 @@ object Generators {
 
   def genPathSimpleAndDistanceUnrelatedSet: Gen[Map[PathSimple, DistanceAndDuration]] =
     Gen.listOf(genPathSimpleAndDistanceUnrelated).map(_.toMap)
+
+  case class BatchSlice(index: Int, size: Int)
+  def genBatchSlices: Gen[List[BatchSlice]] =
+    for {
+      indexes <- Gen.listOf(Gen.chooseNum[Int](0, 100, 1, 4, 10, 15)).map(_.distinct.sorted)
+      sizes   <- Gen.listOfN(indexes.size, Gen.chooseNum(0, 100, 1, 2, 3, 5, 10, 20))
+    } yield indexes.zip(sizes).map { case (index, size) => BatchSlice(index, size) }
 }
