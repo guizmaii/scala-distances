@@ -4,23 +4,24 @@ import java.time.Instant
 
 import cats.effect.Concurrent
 import cats.implicits._
-import com.colisweb.distances.providers.google.re.GoogleDistanceApi.RequestBuilder
 import com.colisweb.distances.providers.google._
+import com.colisweb.distances.providers.google.re.GoogleDistanceApi.RequestBuilder
 import com.colisweb.distances.re.model.{DistanceAndDuration, Point}
 import com.colisweb.distances.{TrafficModel, TravelMode}
+import com.colisweb.google.{CallbackEffect, GoogleGeoApiContext}
 import com.google.maps.model.{
   DistanceMatrix,
   DistanceMatrixElement,
   DistanceMatrixElementStatus,
   Unit => GoogleDistanceUnit
 }
-import com.google.maps.{DistanceMatrixApi, DistanceMatrixApiRequest, PendingResult}
+import com.google.maps.{DistanceMatrixApi, DistanceMatrixApiRequest}
 import squants.space.LengthConversions._
 
 import scala.concurrent.duration._
 
 class GoogleDistanceApi[F[_]: Concurrent](googleContext: GoogleGeoApiContext, trafficModel: TrafficModel) {
-  import GoogleDistanceApi.PendingResultOps
+  import CallbackEffect.PendingResultOps
   import RequestBuilder._
 
   def singleRequest(
@@ -99,18 +100,6 @@ class GoogleDistanceApi[F[_]: Concurrent](googleContext: GoogleGeoApiContext, tr
 }
 
 object GoogleDistanceApi {
-
-  implicit final class PendingResultOps[T](val request: PendingResult[T]) {
-    def asEffect[F[_]: Concurrent]: F[T] =
-      Concurrent[F].cancelable { cb =>
-        request.setCallback(new PendingResult.Callback[T] {
-          override def onResult(result: T): Unit     = cb(Right(result))
-          override def onFailure(e: Throwable): Unit = cb(Left(e))
-        })
-
-        Concurrent[F].delay(request.cancel())
-      }
-  }
 
   object RequestBuilder {
     import GoogleModel._

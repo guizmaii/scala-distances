@@ -4,7 +4,8 @@ import cats.Parallel
 import cats.effect.{Concurrent, ContextShift, IO}
 import com.colisweb.distances.GeoProvider
 import com.colisweb.distances.Types.{LatLong, NonAmbiguousAddress, PostalCode}
-import com.colisweb.distances.providers.google.{GoogleGeoApiContext, GoogleGeoProvider}
+import com.colisweb.distances.providers.google.GoogleGeoProvider
+import com.colisweb.google.GoogleGeoApiContext
 import monix.eval.Task
 import org.scalatest._
 import org.scalatest.concurrent.ScalaFutures

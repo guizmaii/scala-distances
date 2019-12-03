@@ -6,6 +6,7 @@ import com.google.maps.model.{ComponentFilter, LatLng => GoogleLatLng}
 import com.google.maps.{GeocodingApi, GeocodingApiRequest}
 import com.colisweb.distances.GeoProvider
 import com.colisweb.distances.Types.{LatLong, NonAmbiguousAddress, Point, PostalCode}
+import com.colisweb.google.GoogleGeoApiContext
 
 import scala.util.control.NoStackTrace
 
