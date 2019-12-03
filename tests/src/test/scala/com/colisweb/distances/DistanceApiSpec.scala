@@ -7,6 +7,7 @@ import cats.effect.{Concurrent, ContextShift, IO}
 import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types._
 import com.colisweb.distances.caches.{CaffeineCache, RedisCache, RedisConfiguration}
+import com.colisweb.distances.re.model.TravelMode
 import com.colisweb.google.GoogleGeoApiContext
 import monix.eval.Task
 import org.scalatest.concurrent.ScalaFutures

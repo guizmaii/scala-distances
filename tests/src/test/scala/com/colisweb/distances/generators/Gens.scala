@@ -1,8 +1,8 @@
 package com.colisweb.distances.generators
 
-import com.colisweb.distances.TravelMode
 import com.colisweb.distances.Types._
 import com.colisweb.distances.caches.Toto
+import com.colisweb.distances.re.model.TravelMode
 import org.scalacheck.{Arbitrary, Gen}
 import squants.Length
 import squants.space.LengthConversions._

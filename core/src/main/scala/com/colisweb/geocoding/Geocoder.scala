@@ -1,6 +1,6 @@
 package com.colisweb.geocoding
 
-import com.colisweb.distances.re.model.Point
+import com.colisweb.distances.model.Point
 import com.colisweb.geocoding.Model.{NonAmbiguousAddress, PostalCode}
 
 trait Geocoder[F[_]] {

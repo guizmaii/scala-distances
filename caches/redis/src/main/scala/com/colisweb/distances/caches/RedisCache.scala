@@ -1,7 +1,7 @@
 package com.colisweb.distances.caches
 
-import com.colisweb.distances.re.cache.ScalaCacheCache
-import com.colisweb.distances.re.cache.ScalaCacheCache.Key
+import com.colisweb.distances.cache.ScalaCacheCache
+import com.colisweb.distances.cache.ScalaCacheCache.Key
 import scalacache.serialization.Codec
 import scalacache.{Flags, Mode}
 

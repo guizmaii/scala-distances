@@ -4,6 +4,7 @@ import cats.Monad
 import cats.effect.Async
 import com.colisweb.distances.Types.{Distance, LatLong, Segment, TrafficHandling}
 import com.colisweb.distances.caches.NoCache
+import com.colisweb.distances.re.model.TravelMode
 import com.colisweb.distances.{DistanceProvider, _}
 import squants.motion.KilometersPerHour
 import squants.space.Meters
