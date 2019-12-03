@@ -8,7 +8,7 @@ import squants.space.Kilometers
 
 import scala.concurrent.duration._
 
-class BirdHaversineDistance[F[_]: Applicative, R: VelocityParameter] extends Distances.Function[F, Nothing, R] {
+class HaversineDistanceProvider[F[_]: Applicative, R: VelocityParameter] extends Distances.Function[F, Nothing, R] {
 
   override def apply(path: Path[R]): F[Either[Nothing, DistanceAndDuration]] = {
     val distanceInKilometers = Haversine.distanceInKm(path.origin, path.destination)
@@ -19,10 +19,10 @@ class BirdHaversineDistance[F[_]: Applicative, R: VelocityParameter] extends Dis
   }
 }
 
-object BirdHaversineDistance {
+object HaversineDistanceProvider {
 
   def apply[F[_]: Applicative, R: VelocityParameter]: Distances.Function[F, Nothing, R] =
-    new BirdHaversineDistance
+    new HaversineDistanceProvider
 
   def builder[F[_]: Applicative, R: VelocityParameter]: Distances.Builder[F, Nothing, R] = {
     val instance = apply

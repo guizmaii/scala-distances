@@ -1,19 +1,17 @@
 package com.colisweb.distances.caches
 
-import cats.effect.Async
-import com.colisweb.distances.Cache
-import io.circe.Json
-import scalacache.{Cache => InnerCache}
+import com.colisweb.distances.re.cache.ScalaCacheCache.Key
+import com.colisweb.distances.re.cache.{Cache, ScalaCacheCache}
+import scalacache.{Flags, Mode}
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 
 object CaffeineCache {
 
-  import scalacache.caffeine.{CaffeineCache => InnerCaffeineCache}
+  import scalacache.caffeine.{CaffeineCache => CaffeineScalaCache}
 
-  final def apply[F[_]: Async](ttl: Option[Duration]): Cache[F] =
-    new Cache[F](ttl) {
-      override private[distances] final val innerCache: InnerCache[Json] = InnerCaffeineCache[Json]
-    }
-
+  def apply[F[_]: Mode, K: Key, V](flags: Flags, ttl: Option[FiniteDuration]): Cache[F, K, V] = {
+    val caffeine = CaffeineScalaCache.apply[V]
+    ScalaCacheCache(caffeine, flags, ttl)
+  }
 }
