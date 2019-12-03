@@ -24,7 +24,7 @@ object Path {
   }
   object VelocityParameter {
     def apply[R](implicit V: VelocityParameter[R]): VelocityParameter[R] = V
-    def extract[R](f: R => Velocity): VelocityParameter[R]               = (parameters: R) => f(parameters)
+    def extract[R: VelocityParameter](path: Path[R]): Velocity           = VelocityParameter[R].velocity(path.parameters)
     implicit val self: VelocityParameter[Velocity]                       = identity[Velocity]
   }
 
@@ -33,16 +33,17 @@ object Path {
   }
   object TravelModeParameter {
     def apply[R](implicit T: TravelModeParameter[R]): TravelModeParameter[R] = T
-    def extract[R](f: R => TravelMode): TravelModeParameter[R]               = (parameters: R) => f(parameters)
+    def extract[R: TravelModeParameter](path: Path[R]): TravelMode           = TravelModeParameter[R].travelMode(path.parameters)
     implicit val self: TravelModeParameter[TravelMode]                       = identity[TravelMode]
   }
 
   trait DepartureTimeParameter[R] {
-    def departureTime(parameters: R): Instant
+    def departureTime(parameters: R): Option[Instant]
   }
   object DepartureTimeParameter {
     def apply[R](implicit T: DepartureTimeParameter[R]): DepartureTimeParameter[R] = T
-    def extract[R](f: R => Instant): DepartureTimeParameter[R]                     = (parameters: R) => f(parameters)
-    implicit val self: DepartureTimeParameter[Instant]                             = identity[Instant]
+    def extract[R: DepartureTimeParameter](path: Path[R]): Option[Instant] =
+      DepartureTimeParameter[R].departureTime(path.parameters)
+    implicit val self: DepartureTimeParameter[Option[Instant]] = identity[Option[Instant]]
   }
 }
