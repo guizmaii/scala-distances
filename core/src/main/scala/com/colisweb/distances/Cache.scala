@@ -50,6 +50,6 @@ object Cache {
   // (None if the key doesn't exist) wrapped in a F instance.
   type GetCached[F[_], V] = (Decoder[V], Any*) => F[Option[V]]
 
-  // This generates the cache key from V
-  type CacheKey[V] = V => Seq[Any]
+  // This generates the cache key from K
+  type CacheKey[K] = K => Seq[Any]
 }
