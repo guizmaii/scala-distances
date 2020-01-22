@@ -50,7 +50,7 @@ object Stubs {
     earthRadiusMeters * greatCircleDistance
   }
 
-  def mockedCacheKey(path: DirectedPath): Seq[Any] =
+  def defaultCacheKey(path: DirectedPath): Seq[Any] =
     Seq(path.origin, path.destination, path.travelMode, path.maybeTrafficHandling)
 
   def mockedBatchDistanceF[F[_]: Monad](

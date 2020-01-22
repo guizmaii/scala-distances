@@ -39,7 +39,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
           val cache = CaffeineCache[IO](Some(1 days))
           val stub  = distanceProviderStub[IO, Unit]
           val distanceApi =
-            DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get, mockedCacheKey)
+            DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get, defaultCacheKey)
           val latLong        = LatLong(0.0, 0.0)
           val expectedResult = Map((Driving, Right(Distance.zero)), (Bicycling, Right(Distance.zero)))
 
@@ -54,7 +54,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
           val cache = CaffeineCache[IO](Some(1 days))
           val stub  = distanceProviderStub[IO, Unit]
           val distanceApi =
-            DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get, mockedCacheKey)
+            DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get, defaultCacheKey)
           val postalCode     = PostalCode("59000")
           val expectedResult = Map((Driving, Right(Distance.zero)), (Bicycling, Right(Distance.zero)))
 
@@ -90,7 +90,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
             }
 
           val distanceApi: DistanceApi[F, Unit] =
-            DistanceApi[F, Unit](mockedDistanceF[F], mockedBatchDistanceF[F], cache.caching, cache.get, mockedCacheKey)
+            DistanceApi[F, Unit](mockedDistanceF[F], mockedBatchDistanceF[F], cache.caching, cache.get, defaultCacheKey)
 
           val errorDistanceApi: DistanceApi[F, Unit] =
             DistanceApi[F, Unit](
@@ -98,7 +98,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
               mockedBatchDistanceErrorF[F],
               cache.caching,
               cache.get,
-              mockedCacheKey
+              defaultCacheKey
             )
 
           val paris01 = LatLong(48.8640493, 2.3310526)
@@ -275,7 +275,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
             val caches = segments.map { segment =>
               val path = DirectedPath(segment.origin, segment.destination, Driving, None)
 
-              runSync(cache.get(Distance.decoder, mockedCacheKey(path))).asInstanceOf[Option[Distance]]
+              runSync(cache.get(Distance.decoder, defaultCacheKey(path))).asInstanceOf[Option[Distance]]
             }
 
             results.keys should contain theSameElementsAs segments
@@ -295,7 +295,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
             val allCaches = allSegments.map { segment =>
               val path = DirectedPath(segment.origin, segment.destination, Driving, None)
 
-              runSync(cache.get(Distance.decoder, mockedCacheKey(path))).asInstanceOf[Option[Distance]]
+              runSync(cache.get(Distance.decoder, defaultCacheKey(path))).asInstanceOf[Option[Distance]]
             }
 
             allResults.keys should contain theSameElementsAs allSegments
