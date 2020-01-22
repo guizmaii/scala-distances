@@ -275,7 +275,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
             val caches = segments.map { segment =>
               val path = DirectedPath(segment.origin, segment.destination, Driving, None)
 
-              runSync(cache.get(Distance.decoder, defaultCacheKey(path))).asInstanceOf[Option[Distance]]
+              runSync(cache.get(Distance.decoder, defaultCacheKey(path): _*)).asInstanceOf[Option[Distance]]
             }
 
             results.keys should contain theSameElementsAs segments
@@ -295,7 +295,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
             val allCaches = allSegments.map { segment =>
               val path = DirectedPath(segment.origin, segment.destination, Driving, None)
 
-              runSync(cache.get(Distance.decoder, defaultCacheKey(path))).asInstanceOf[Option[Distance]]
+              runSync(cache.get(Distance.decoder, defaultCacheKey(path): _*)).asInstanceOf[Option[Distance]]
             }
 
             allResults.keys should contain theSameElementsAs allSegments
