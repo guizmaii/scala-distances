@@ -72,7 +72,7 @@ class DistanceApi[F[_]: Async: Parallel, E](
         .flatMap(origin => destinations.map(Segment(origin, _)))
         .parTraverse { segment =>
           val path             = DirectedPath(segment.origin, segment.destination, travelMode, maybeTrafficHandling)
-          val maybeCachedValue = getCached(decoder, cacheKey(path))
+          val maybeCachedValue = getCached(decoder, cacheKey(path): _*)
 
           (segment.pure[F] -> maybeCachedValue).bisequence
         }
@@ -186,7 +186,7 @@ class DistanceApi[F[_]: Async: Parallel, E](
   ): F[List[(DirectedPath, Either[E, Distance])]] = {
     modes.parTraverse { mode =>
       for {
-        cached <- getCached(decoder, cacheKey(DirectedPath(origin, destination, mode, maybeTrafficHandling)))
+        cached <- getCached(decoder, cacheKey(DirectedPath(origin, destination, mode, maybeTrafficHandling)): _*)
         errorOrDistance <- cached match {
           case Some(value) => Either.right[E, Distance](value).pure[F]
           case None        => distanceF(mode, origin, destination, maybeTrafficHandling)
@@ -205,7 +205,7 @@ class DistanceApi[F[_]: Async: Parallel, E](
   ): F[Either[E, Distance]] = {
     errorOrDistance match {
       case Right(distance) =>
-        caching(distance, decoder, encoder, cacheKey(DirectedPath(origin, destination, mode, maybeTrafficHandling)))
+        caching(distance, decoder, encoder, cacheKey(DirectedPath(origin, destination, mode, maybeTrafficHandling)): _*)
           .map(Right[E, Distance])
 
       case Left(error) => error.pure[F].map(Left[E, Distance])
