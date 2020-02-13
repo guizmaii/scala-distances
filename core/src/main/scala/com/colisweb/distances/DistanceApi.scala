@@ -3,7 +3,7 @@ package com.colisweb.distances
 import cats.Parallel
 import cats.effect.Async
 import cats.kernel.Semigroup
-import com.colisweb.distances.Cache.{Caching, GetCached}
+import com.colisweb.distances.Cache.{CacheKey, Caching, GetCached}
 import com.colisweb.distances.DistanceProvider.{BatchDistanceF, DistanceF}
 import com.colisweb.distances.Types._
 import io.circe.{Decoder, Encoder}
@@ -20,6 +20,7 @@ import scala.collection.breakOut
   * @param caching A function which, given a value, caches it and returns it wrapped in a F typeclass instance.
   * @param getCached A function which try to retrieve a value from the cache. The value is wrapped in a Option,
   *                  which is also wrapped in a F typeclass instance.
+  * @param cacheKey A key construction function.
   * @tparam F A typeclass which is constructed from Async and Parallel.
   * @tparam E An error type, specific to the distance provider.
   */
@@ -27,9 +28,9 @@ class DistanceApi[F[_]: Async: Parallel, E](
     distanceF: DistanceF[F, E],
     batchDistanceF: BatchDistanceF[F, E],
     caching: Caching[F, Distance],
-    getCached: GetCached[F, Distance]
+    getCached: GetCached[F, Distance],
+    cacheKey: CacheKey[DirectedPath]
 ) {
-
   import DistanceApi._
   import cats.implicits._
   import com.colisweb.distances.utils.Implicits._
@@ -70,8 +71,8 @@ class DistanceApi[F[_]: Async: Parallel, E](
       origins
         .flatMap(origin => destinations.map(Segment(origin, _)))
         .parTraverse { segment =>
-          val maybeCachedValue =
-            getCached(decoder, travelMode, segment.origin, segment.destination, maybeTrafficHandling)
+          val path             = DirectedPath(segment.origin, segment.destination, travelMode, maybeTrafficHandling)
+          val maybeCachedValue = getCached(decoder, cacheKey(path): _*)
 
           (segment.pure[F] -> maybeCachedValue).bisequence
         }
@@ -182,10 +183,10 @@ class DistanceApi[F[_]: Async: Parallel, E](
       origin: LatLong,
       destination: LatLong,
       maybeTrafficHandling: Option[TrafficHandling]
-  ): F[List[(DirectedPath, Either[E, Distance])]] =
+  ): F[List[(DirectedPath, Either[E, Distance])]] = {
     modes.parTraverse { mode =>
       for {
-        cached <- getCached(decoder, mode, origin, destination, maybeTrafficHandling)
+        cached <- getCached(decoder, cacheKey(DirectedPath(origin, destination, mode, maybeTrafficHandling)): _*)
         errorOrDistance <- cached match {
           case Some(value) => Either.right[E, Distance](value).pure[F]
           case None        => distanceF(mode, origin, destination, maybeTrafficHandling)
@@ -193,6 +194,7 @@ class DistanceApi[F[_]: Async: Parallel, E](
         result <- maybeUpdateCache(errorOrDistance, mode, origin, destination, maybeTrafficHandling)
       } yield DirectedPath(origin, destination, mode, maybeTrafficHandling) -> result
     }
+  }
 
   private def maybeUpdateCache(
       errorOrDistance: Either[E, Distance],
@@ -203,7 +205,8 @@ class DistanceApi[F[_]: Async: Parallel, E](
   ): F[Either[E, Distance]] = {
     errorOrDistance match {
       case Right(distance) =>
-        caching(distance, decoder, encoder, mode, origin, destination, maybeTrafficHandling).map(Right[E, Distance])
+        caching(distance, decoder, encoder, cacheKey(DirectedPath(origin, destination, mode, maybeTrafficHandling)): _*)
+          .map(Right[E, Distance])
 
       case Left(error) => error.pure[F].map(Left[E, Distance])
     }
@@ -218,9 +221,10 @@ object DistanceApi {
       distanceF: DistanceF[F, E],
       batchDistanceF: BatchDistanceF[F, E],
       caching: Caching[F, Distance],
-      getCached: GetCached[F, Distance]
+      getCached: GetCached[F, Distance],
+      cacheKey: CacheKey[DirectedPath]
   ): DistanceApi[F, E] =
-    new DistanceApi(distanceF, batchDistanceF, caching, getCached)
+    new DistanceApi(distanceF, batchDistanceF, caching, getCached, cacheKey)
 
   private[DistanceApi] final val directedPathSemiGroup: Semigroup[DirectedPathMultipleModes] =
     new Semigroup[DirectedPathMultipleModes] {

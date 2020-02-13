@@ -38,7 +38,8 @@ abstract class Cache[F[_]: Async](ttl: Option[Duration]) {
 
 object Cache {
   // V is the cached value
-  // Any* corresponds to the key parts of V see [[InnerCache.cachingF()]]
+  // K is the key value
+  // Any* or Seq[Any] corresponds to the key parts of V see [[InnerCache.cachingF()]]
 
   // This is a caching function for a value wrapped in `F`: it tries to execute and cache it if it succeeds.
   type CachingF[F[_], V] = (F[V], Decoder[V], Encoder[V], Any*) => F[V]
@@ -49,4 +50,7 @@ object Cache {
   // This returns the cached value corresponding to the specified key. It returns an Option
   // (None if the key doesn't exist) wrapped in a F instance.
   type GetCached[F[_], V] = (Decoder[V], Any*) => F[Option[V]]
+
+  // This generates the cache key from K
+  type CacheKey[K] = K => Seq[Any]
 }

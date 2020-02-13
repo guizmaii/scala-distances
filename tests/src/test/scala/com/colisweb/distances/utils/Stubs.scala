@@ -2,7 +2,7 @@ package com.colisweb.distances.utils
 
 import cats.Monad
 import cats.effect.Async
-import com.colisweb.distances.Types.{Distance, LatLong, Segment, TrafficHandling}
+import com.colisweb.distances.Types.{DirectedPath, Distance, LatLong, Segment, TrafficHandling}
 import com.colisweb.distances.caches.NoCache
 import com.colisweb.distances.{DistanceProvider, _}
 import squants.motion.KilometersPerHour
@@ -49,6 +49,9 @@ object Stubs {
 
     earthRadiusMeters * greatCircleDistance
   }
+
+  def defaultCacheKey(path: DirectedPath): Seq[Any] =
+    Seq(path.origin, path.destination, path.travelMode, path.maybeTrafficHandling)
 
   def mockedBatchDistanceF[F[_]: Monad](
       mode: TravelMode,

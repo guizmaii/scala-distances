@@ -21,7 +21,6 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
-
   import com.colisweb.distances.utils.Stubs._
 
   val globalExecutionContext: ExecutionContext = ExecutionContext.global
@@ -37,9 +36,10 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
     "#distance" should {
       "if origin == destination" should {
         "not call the provider and return immmediatly Distance.zero" in {
-          val cache          = CaffeineCache[IO](Some(1 days))
-          val stub           = distanceProviderStub[IO, Unit]
-          val distanceApi    = DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get)
+          val cache = CaffeineCache[IO](Some(1 days))
+          val stub  = distanceProviderStub[IO, Unit]
+          val distanceApi =
+            DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get, defaultCacheKey)
           val latLong        = LatLong(0.0, 0.0)
           val expectedResult = Map((Driving, Right(Distance.zero)), (Bicycling, Right(Distance.zero)))
 
@@ -51,9 +51,10 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
     "#distanceFromPostalCodes" should {
       "if origin == destination" should {
         "not call the provider and return immmediatly Distance.zero" in {
-          val cache          = CaffeineCache[IO](Some(1 days))
-          val stub           = distanceProviderStub[IO, Unit]
-          val distanceApi    = DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get)
+          val cache = CaffeineCache[IO](Some(1 days))
+          val stub  = distanceProviderStub[IO, Unit]
+          val distanceApi =
+            DistanceApi[IO, Unit](stub.distance, stub.batchDistances, cache.caching, cache.get, defaultCacheKey)
           val postalCode     = PostalCode("59000")
           val expectedResult = Map((Driving, Right(Distance.zero)), (Bicycling, Right(Distance.zero)))
 
@@ -89,10 +90,16 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
             }
 
           val distanceApi: DistanceApi[F, Unit] =
-            DistanceApi[F, Unit](mockedDistanceF[F], mockedBatchDistanceF[F], cache.caching, cache.get)
+            DistanceApi[F, Unit](mockedDistanceF[F], mockedBatchDistanceF[F], cache.caching, cache.get, defaultCacheKey)
 
           val errorDistanceApi: DistanceApi[F, Unit] =
-            DistanceApi[F, Unit](mockedDistanceErrorF[F], mockedBatchDistanceErrorF[F], cache.caching, cache.get)
+            DistanceApi[F, Unit](
+              mockedDistanceErrorF[F],
+              mockedBatchDistanceErrorF[F],
+              cache.caching,
+              cache.get,
+              defaultCacheKey
+            )
 
           val paris01 = LatLong(48.8640493, 2.3310526)
           val paris02 = LatLong(48.8675641, 2.34399)
@@ -266,8 +273,9 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
                 .asInstanceOf[Map[Segment, Either[Unit, Distance]]]
 
             val caches = segments.map { segment =>
-              runSync(cache.get(Distance.decoder, Driving, segment.origin, segment.destination, None))
-                .asInstanceOf[Option[Distance]]
+              val path = DirectedPath(segment.origin, segment.destination, Driving, None)
+
+              runSync(cache.get(Distance.decoder, defaultCacheKey(path): _*)).asInstanceOf[Option[Distance]]
             }
 
             results.keys should contain theSameElementsAs segments
@@ -285,8 +293,9 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
                 .asInstanceOf[Map[Segment, Either[Unit, Distance]]]
 
             val allCaches = allSegments.map { segment =>
-              runSync(cache.get(Distance.decoder, Driving, segment.origin, segment.destination, None))
-                .asInstanceOf[Option[Distance]]
+              val path = DirectedPath(segment.origin, segment.destination, Driving, None)
+
+              runSync(cache.get(Distance.decoder, defaultCacheKey(path): _*)).asInstanceOf[Option[Distance]]
             }
 
             allResults.keys should contain theSameElementsAs allSegments
