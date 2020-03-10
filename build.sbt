@@ -27,21 +27,16 @@ lazy val core = project
     libraryDependencies ++= Seq(
       CompileTimeDependencies.cats,
       CompileTimeDependencies.catsEffect,
+      CompileTimeDependencies.catsKernel,
       CompileTimeDependencies.circe,
       CompileTimeDependencies.circeGeneric,
-      CompileTimeDependencies.circeGenericExtras,
-      CompileTimeDependencies.circeOptics,
-      CompileTimeDependencies.circeParser,
-      CompileTimeDependencies.circeRefined,
       CompileTimeDependencies.enumeratum,
-      CompileTimeDependencies.loggingInterceptor,
       CompileTimeDependencies.scalaCache,
       CompileTimeDependencies.scalaCacheCatsEffect,
-      CompileTimeDependencies.scalaCacheCirce,
       CompileTimeDependencies.scalaCompat,
+      CompileTimeDependencies.shapeless,
       CompileTimeDependencies.squants
     ) ++ Seq(
-      CompileTimeDependencies.monix % Test,
       TestDependencies.kantan,
       TestDependencies.kantanCats,
       TestDependencies.kantanGeneric,
@@ -58,7 +53,7 @@ lazy val core = project
 lazy val `google-provider` = project
   .in(file("providers/google"))
   .settings(moduleName := "scala-distances-provider-google")
-  .settings(libraryDependencies += CompileTimeDependencies.googleMaps)
+  .settings(libraryDependencies ++= Seq(CompileTimeDependencies.googleMaps, CompileTimeDependencies.loggingInterceptor))
   .dependsOn(core)
 
 //// Caches
@@ -66,7 +61,12 @@ lazy val `google-provider` = project
 lazy val `redis-cache` = project
   .in(file("caches/redis"))
   .settings(moduleName := "scala-distances-cache-redis")
-  .settings(libraryDependencies += CompileTimeDependencies.scalaCacheRedis)
+  .settings(
+    libraryDependencies ++= Seq(
+      CompileTimeDependencies.scalaCacheCirce,
+      CompileTimeDependencies.scalaCacheRedis
+    )
+  )
   .dependsOn(core)
 
 lazy val `caffeine-cache` = project
@@ -85,12 +85,14 @@ lazy val `no-cache` = project
 lazy val tests = project
   .settings(noPublishSettings)
   .dependsOn(core % "test->test;compile->compile", `google-provider`, `redis-cache`, `caffeine-cache`, `no-cache`)
+  .settings(libraryDependencies ++= Seq(CompileTimeDependencies.monixEval % Test))
 
 lazy val benchmarks = project
   .enablePlugins(JmhPlugin)
   .settings(noPublishSettings)
-  .settings(libraryDependencies += CompileTimeDependencies.monix)
   .dependsOn(core)
+  .settings(libraryDependencies ++= Seq(CompileTimeDependencies.monixEval, CompileTimeDependencies.monixExecution))
+  //.settings(unusedCompileDependenciesFilter -= moduleFilter("org.openjdk.jmh"))
 
 //// Publishing settings
 

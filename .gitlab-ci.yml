@@ -2,10 +2,18 @@ include:
   - 'https://gitlab.com/colisweb-open-source/ci-common/raw/v9.1.1/templates/scala.yml'
   - 'https://gitlab.com/colisweb-open-source/ci-common/raw/v9.1.1/services/redis.yml'
 
+format:
+  extends: .sbt-format
+  tags: []
+
 test scala-distances:
   extends:
   - .sbt-test
   - .redis
+  tags: []
+
+unused-dependencies:
+  extends: .sbt-unused-dependencies
   tags: []
 
 version:
