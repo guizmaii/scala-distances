@@ -1,10 +1,10 @@
 package com.colisweb.distances.bird
 
-import com.colisweb.distances.model.Point
+import com.colisweb.distances.model.{DistanceInKm, Point}
 
 object Haversine {
 
-  def distanceInKm(origin: Point, destination: Point): Double = {
+  def distanceInKm(origin: Point, destination: Point): DistanceInKm = {
     import scala.math._
 
     val deltaLat = toRadians(destination.latitude - origin.latitude)

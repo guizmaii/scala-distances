@@ -1,8 +1,7 @@
 package com.colisweb.distances
 
 import cats.Id
-import com.colisweb.distances.model.DistanceAndDuration
-import com.colisweb.distances.model.Path.PathSimple
+import com.colisweb.distances.model.{DistanceAndDuration, PathPlain}
 import com.colisweb.distances.util.FromMapDistances
 import com.colisweb.distances.util.TestTypes.{FirstError, SecondError}
 import org.scalacheck.Gen
@@ -10,18 +9,20 @@ import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Matchers, WordSpec}
 
 class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matchers {
-  import builder.base._
   import com.colisweb.distances.generator.Generators._
+
+  private val builders = builder.builders[Id]
+  import builders._
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 20, workers = 4)
 
-  private val firstError  = FirstError
-  private val secondError = SecondError
+  private val firstError: FirstError   = FirstError
+  private val secondError: SecondError = SecondError
 
   private def verifyDistanceForAllPathsMatchExpected(
-      distances: Distances.Builder[Id, SecondError.type, Unit],
-      mapping: Map[PathSimple, DistanceAndDuration]
+      distances: Distances.Builder[Id, PathPlain, SecondError],
+      mapping: Map[PathPlain, DistanceAndDuration]
   ) = {
     mapping.toList.map {
       case (path, expected) =>
@@ -30,8 +31,8 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
   }
 
   private def verifyDistanceForAllPathsReturnsSecondError(
-      distances: Distances.Builder[Id, SecondError.type, Unit],
-      paths: List[PathSimple]
+      distances: Distances.Builder[Id, PathPlain, SecondError],
+      paths: List[PathPlain]
   ) = {
     paths.map { path =>
       (path -> distances.apply(path)) shouldBe (path -> Left(secondError))
@@ -70,7 +71,7 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
     }
 
     "always return second's error when first and second never give a result" in forAll(
-      Gen.nonEmptyListOf(genPathSimple)
+      Gen.nonEmptyListOf(genPathBetween)
     ) { paths =>
       val first     = FromMapDistances[Id].emptyAndError(firstError)
       val second    = FromMapDistances[Id].emptyAndError(secondError)
@@ -111,7 +112,7 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
     }
 
     "always return second's error when first and second never give a result" in forAll(
-      Gen.nonEmptyListOf(genPathSimple)
+      Gen.nonEmptyListOf(genPathBetween)
     ) { paths =>
       val first     = FromMapDistances[Id].emptyAndError(firstError)
       val second    = FromMapDistances[Id].emptyAndError(secondError)

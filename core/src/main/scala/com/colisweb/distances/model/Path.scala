@@ -2,48 +2,79 @@ package com.colisweb.distances.model
 
 import java.time.Instant
 
+import com.colisweb.distances.cache.ProductCacheKey
 import squants.motion.Velocity
 
-case class Path[R](origin: Point, destination: Point, parameters: R)
+trait Path {
+  val origin: Point
+  val destination: Point
+}
+
+final case class PathPlain(origin: Point, destination: Point) extends Path with ProductCacheKey
+
+final case class PathWithSpeed(origin: Point, destination: Point, speed: SpeedInKmH)
+    extends Path
+    with FixedSpeedTransportation
+    with ProductCacheKey
+
+final case class PathWithMode(origin: Point, destination: Point, travelMode: TravelMode)
+    extends Path
+    with TravelModeTransportation
+    with ProductCacheKey
+
+final case class PathWithModeAt(
+    origin: Point,
+    destination: Point,
+    travelMode: TravelMode,
+    departureTime: Option[Instant]
+) extends Path
+    with TravelModeTransportation
+    with DepartureTime
+    with ProductCacheKey
+
+final case class PathWithModeAndSpeedAt(
+    origin: Point,
+    destination: Point,
+    travelMode: TravelMode,
+    speed: SpeedInKmH,
+    departureTime: Option[Instant]
+) extends Path
+    with TravelModeTransportation
+    with FixedSpeedTransportation
+    with DepartureTime
+    with ProductCacheKey
 
 object Path {
 
-  type PathSimple                    = Path[Unit]
-  type PathVelocity                  = Path[Velocity]
-  type PathTravelMode                = Path[TravelMode]
-  type PathTravelModeTraffic         = Path[TravelModeTraffic]
-  type PathTravelModeTrafficVelocity = Path[TravelModeTrafficVelocity]
+  def apply(origin: Point, destination: Point): PathPlain = PathPlain(origin, destination)
 
-  def apply(origin: Point, destination: Point): Path[Unit] = Path(origin, destination, ())
+  def apply(origin: Point, destination: Point, speed: SpeedInKmH): PathWithSpeed =
+    PathWithSpeed(origin, destination, speed)
 
-  case class TravelModeTraffic(travelMode: TravelMode, traffic: Option[Instant])
-  case class TravelModeTrafficVelocity(travelMode: TravelMode, traffic: Option[Instant], velocity: Velocity)
+  def apply(origin: Point, destination: Point, speed: Velocity): PathWithSpeed =
+    PathWithSpeed(origin, destination, speed.toKilometersPerHour)
 
-  trait VelocityParameter[R] {
-    def velocity(parameters: R): Velocity
-  }
-  object VelocityParameter {
-    def apply[R](implicit V: VelocityParameter[R]): VelocityParameter[R] = V
-    def extract[R: VelocityParameter](path: Path[R]): Velocity           = VelocityParameter[R].velocity(path.parameters)
-    implicit val self: VelocityParameter[Velocity]                       = identity[Velocity]
-  }
+  def apply(origin: Point, destination: Point, travelMode: TravelMode): PathWithMode =
+    PathWithMode(origin, destination, travelMode)
 
-  trait TravelModeParameter[R] {
-    def travelMode(parameters: R): TravelMode
-  }
-  object TravelModeParameter {
-    def apply[R](implicit T: TravelModeParameter[R]): TravelModeParameter[R] = T
-    def extract[R: TravelModeParameter](path: Path[R]): TravelMode           = TravelModeParameter[R].travelMode(path.parameters)
-    implicit val self: TravelModeParameter[TravelMode]                       = identity[TravelMode]
-  }
+  def apply(origin: Point, destination: Point, travelMode: TravelMode, departureTime: Option[Instant]): PathWithModeAt =
+    PathWithModeAt(origin, destination, travelMode, departureTime)
 
-  trait DepartureTimeParameter[R] {
-    def departureTime(parameters: R): Option[Instant]
-  }
-  object DepartureTimeParameter {
-    def apply[R](implicit T: DepartureTimeParameter[R]): DepartureTimeParameter[R] = T
-    def extract[R: DepartureTimeParameter](path: Path[R]): Option[Instant] =
-      DepartureTimeParameter[R].departureTime(path.parameters)
-    implicit val self: DepartureTimeParameter[Option[Instant]] = identity[Option[Instant]]
-  }
+  def apply(
+      origin: Point,
+      destination: Point,
+      travelMode: TravelMode,
+      speed: SpeedInKmH,
+      departureTime: Option[Instant]
+  ): PathWithModeAndSpeedAt =
+    PathWithModeAndSpeedAt(origin, destination, travelMode, speed, departureTime)
+
+  def apply(
+      origin: Point,
+      destination: Point,
+      travelMode: TravelMode,
+      speed: Velocity,
+      departureTime: Option[Instant]
+  ): PathWithModeAndSpeedAt =
+    PathWithModeAndSpeedAt(origin, destination, travelMode, speed.toKilometersPerHour, departureTime)
 }

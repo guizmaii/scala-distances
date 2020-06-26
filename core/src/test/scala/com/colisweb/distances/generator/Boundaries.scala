@@ -1,20 +1,20 @@
 package com.colisweb.distances.generator
 
-import com.colisweb.distances.model.Point
+import com.colisweb.distances.model._
 
 import scala.concurrent.duration._
 
 object Boundaries {
 
-  val minSpeedKmh: Double      = 0.0d
-  val lightSpeedKmh: Double    = 300000.0d * 3600
-  val maxDistanceMeters: Long  = 12000 * 1000
-  val maxDurationSeconds: Long = 72.hours.toSeconds
+  val minSpeedKmh: SpeedInKmH               = 0.0d
+  val lightSpeedKmh: SpeedInKmH             = 300000.0d * 3600
+  val maxDistanceKilometers: DistanceInKm   = 12000d
+  val maxDurationSeconds: DurationInSeconds = 72.hours.toSeconds
 
-  val latitudeMin: Double  = -90.0d
-  val latitudeMax: Double  = 90.0d
-  val longitudeMin: Double = -180.0d
-  val longitudeMax: Double = 180.0d
+  val latitudeMin: Latitude   = -90.0d
+  val latitudeMax: Latitude   = 90.0d
+  val longitudeMin: Longitude = -180.0d
+  val longitudeMax: Longitude = 180.0d
 }
 
 case class PointBoundaries(bottomLeft: Point, topRight: Point)

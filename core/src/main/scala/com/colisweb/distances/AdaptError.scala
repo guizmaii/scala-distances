@@ -2,20 +2,21 @@ package com.colisweb.distances
 
 import cats.Functor
 import cats.implicits._
+import com.colisweb.distances.model.Path
 
 object AdaptError {
 
-  def apply[F[_]: Functor, E, E2, O](
-      api: Distances.Builder[F, E, O]
-  )(adaptation: E => E2): Distances.Builder[F, E2, O] =
+  def apply[F[_]: Functor, P <: Path, E, E2](
+      api: Distances.Builder[F, P, E]
+  )(adaptation: E => E2): Distances.Builder[F, P, E2] =
     api.map(_.leftMap(adaptation))
 }
 
 object AdaptErrorBatch {
 
-  def apply[F[_]: Functor, E, E2, O](
-      api: Distances.BuilderBatch[F, E, O],
+  def apply[F[_]: Functor, P <: Path, E, E2](
+      api: Distances.BuilderBatch[F, P, E],
       adaptation: E => E2
-  ): Distances.BuilderBatch[F, E2, O] =
+  ): Distances.BuilderBatch[F, P, E2] =
     api.map(_.mapValues(_.leftMap(adaptation)))
 }

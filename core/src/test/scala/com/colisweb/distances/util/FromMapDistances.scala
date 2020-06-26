@@ -2,39 +2,38 @@ package com.colisweb.distances.util
 
 import cats.Monad
 import cats.data.Kleisli
-import com.colisweb.distances.Distances
-import com.colisweb.distances.model.DistanceAndDuration
-import com.colisweb.distances.model.Path.PathSimple
-import com.colisweb.distances.builder
+import com.colisweb.distances.{Distances, builder}
+import com.colisweb.distances.model.{DistanceAndDuration, PathPlain}
 
 class FromMapDistances[F[_]](implicit F: Monad[F]) {
-  import builder.sequential._
+  private val builders = builder.builders[F]
+  import builders._
 
-  def fromMap(data: Map[PathSimple, DistanceAndDuration]): Distances.BuilderOption[F, Unit] =
+  def fromMap(data: Map[PathPlain, DistanceAndDuration]): Distances.BuilderOption[F, PathPlain] =
     Kleisli(path => F.pure(data.get(path)))
 
-  def empty: Distances.BuilderOption[F, Unit] =
-    fromMap(Map.empty[PathSimple, DistanceAndDuration])
+  def empty: Distances.BuilderOption[F, PathPlain] =
+    fromMap(Map.empty[PathPlain, DistanceAndDuration])
 
-  def fromMapOrError[E](error: => E, data: Map[PathSimple, DistanceAndDuration]): Distances.Builder[F, E, Unit] =
+  def fromMapOrError[E](error: => E, data: Map[PathPlain, DistanceAndDuration]): Distances.Builder[F, PathPlain, E] =
     fromMap(data).nonOptional(error)
 
-  def emptyAndError[E](error: => E): Distances.Builder[F, E, Unit] =
-    fromMapOrError(error, Map.empty[PathSimple, DistanceAndDuration])
+  def emptyAndError[E](error: => E): Distances.Builder[F, PathPlain, E] =
+    fromMapOrError(error, Map.empty[PathPlain, DistanceAndDuration])
 
-  def batchFromMap(data: Map[PathSimple, DistanceAndDuration]): Distances.BuilderBatchOption[F, Unit] =
+  def batchFromMap(data: Map[PathPlain, DistanceAndDuration]): Distances.BuilderBatchOption[F, PathPlain] =
     fromMap(data).batched
 
-  def batchEmpty: Distances.BuilderBatchOption[F, Unit] =
+  def batchEmpty: Distances.BuilderBatchOption[F, PathPlain] =
     empty.batched
 
   def batchFromMapOrError[E](
       error: => E,
-      data: Map[PathSimple, DistanceAndDuration]
-  ): Distances.BuilderBatch[F, E, Unit] =
+      data: Map[PathPlain, DistanceAndDuration]
+  ): Distances.BuilderBatch[F, PathPlain, E] =
     fromMapOrError(error, data).batched
 
-  def batchEmptyAndError[E](error: => E): Distances.BuilderBatch[F, E, Unit] =
+  def batchEmptyAndError[E](error: => E): Distances.BuilderBatch[F, PathPlain, E] =
     emptyAndError(error).batched
 }
 

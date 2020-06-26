@@ -12,5 +12,5 @@ object TestValues {
 
   val pp = TestTypes.IdParam("a")
 
-  val d12 = DistanceAndDuration(Kilometers(10), 11.seconds)
+  val d12 = DistanceAndDuration(distance = 10, duration = 11)
 }

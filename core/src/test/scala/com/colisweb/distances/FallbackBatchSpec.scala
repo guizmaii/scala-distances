@@ -1,8 +1,7 @@
 package com.colisweb.distances
 
 import cats.Id
-import com.colisweb.distances.model.DistanceAndDuration
-import com.colisweb.distances.model.Path.PathSimple
+import com.colisweb.distances.model.{DistanceAndDuration, PathPlain}
 import com.colisweb.distances.util.FromMapDistances
 import com.colisweb.distances.util.TestTypes.{FirstError, SecondError}
 import org.scalacheck.Gen
@@ -11,18 +10,20 @@ import org.scalatest.{Matchers, WordSpec}
 
 class FallbackBatchSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matchers {
 
-  import builder.base._
   import com.colisweb.distances.generator.Generators._
+
+  private val builders = builder.builders[Id]
+  import builders._
 
   implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 20, workers = 4)
 
-  private val firstError  = FirstError
-  private val secondError = SecondError
+  private val firstError: FirstError   = FirstError
+  private val secondError: SecondError = SecondError
 
   private def verifyDistanceForAllPathsMatchExpected(
-      distances: Distances.BuilderBatch[Id, SecondError.type, Unit],
-      mapping: Map[PathSimple, DistanceAndDuration],
+      distances: Distances.BuilderBatch[Id, PathPlain, SecondError],
+      mapping: Map[PathPlain, DistanceAndDuration],
       slices: List[BatchSlice]
   ) = {
     val mappingAsArray = mapping.toArray
@@ -37,8 +38,8 @@ class FallbackBatchSpec extends WordSpec with GeneratorDrivenPropertyChecks with
   }
 
   private def verifyDistanceForAllPathsReturnsSecondError(
-      distances: Distances.BuilderBatch[Id, SecondError.type, Unit],
-      paths: List[PathSimple],
+      distances: Distances.BuilderBatch[Id, PathPlain, SecondError],
+      paths: List[PathPlain],
       slices: List[BatchSlice]
   ) = {
     val pathsAsArray = paths.toArray
@@ -86,7 +87,7 @@ class FallbackBatchSpec extends WordSpec with GeneratorDrivenPropertyChecks with
     }
 
     "always return second's error when first and second never give a result" in forAll(
-      Gen.nonEmptyListOf(genPathSimple),
+      Gen.nonEmptyListOf(genPathBetween),
       genBatchSlices
     ) { (paths, slices) =>
       val first     = FromMapDistances[Id].batchEmptyAndError(firstError)
@@ -131,7 +132,7 @@ class FallbackBatchSpec extends WordSpec with GeneratorDrivenPropertyChecks with
     }
 
     "always return second's error when first and second never give a result" in forAll(
-      Gen.nonEmptyListOf(genPathSimple),
+      Gen.nonEmptyListOf(genPathBetween),
       genBatchSlices
     ) { (paths, slices) =>
       val first     = FromMapDistances[Id].batchEmptyAndError(firstError)

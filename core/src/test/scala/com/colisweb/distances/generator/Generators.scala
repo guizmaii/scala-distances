@@ -1,17 +1,9 @@
 package com.colisweb.distances.generator
 
-import java.util.concurrent.TimeUnit
-
 import com.colisweb.distances.generator.Boundaries._
 import com.colisweb.distances.generator.PointBoundaries._
-import com.colisweb.distances.model.Path.PathSimple
-import com.colisweb.distances.model.Point.{Latitude, Longitude}
-import com.colisweb.distances.model.{DistanceAndDuration, Path, Point}
+import com.colisweb.distances.model._
 import org.scalacheck.Gen
-import squants.motion.{Distance, KilometersPerHour, Velocity}
-import squants.space.Meters
-
-import scala.concurrent.duration.FiniteDuration
 
 object Generators {
 
@@ -46,14 +38,14 @@ object Generators {
           }
       )
 
-  def genSpeed: Gen[Velocity] =
-    Gen.chooseNum(minSpeedKmh, lightSpeedKmh).map(d => KilometersPerHour(d))
+  def genSpeed: Gen[SpeedInKmH] =
+    Gen.chooseNum(minSpeedKmh, lightSpeedKmh)
 
-  def genDistance: Gen[Distance] =
-    Gen.chooseNum(0, maxDistanceMeters).map(Meters(_))
+  def genDistance: Gen[DistanceInKm] =
+    Gen.chooseNum(0d, maxDistanceKilometers)
 
-  def genDuration: Gen[FiniteDuration] =
-    Gen.chooseNum(0, maxDurationSeconds).map(FiniteDuration(_, TimeUnit.SECONDS))
+  def genDuration: Gen[DurationInSeconds] =
+    Gen.chooseNum(0, maxDurationSeconds)
 
   def genDistanceAndDurationUnrelated: Gen[DistanceAndDuration] =
     for {
@@ -61,19 +53,19 @@ object Generators {
       duration <- genDuration
     } yield DistanceAndDuration(distance, duration)
 
-  def genPathSimple: Gen[PathSimple] =
+  def genPathBetween: Gen[PathPlain] =
     for {
       origin      <- genPoint(World)
       destination <- genPoint(World)
     } yield Path(origin, destination)
 
-  def genPathSimpleAndDistanceUnrelated: Gen[(PathSimple, DistanceAndDuration)] =
+  def genPathSimpleAndDistanceUnrelated: Gen[(PathPlain, DistanceAndDuration)] =
     for {
-      path                <- genPathSimple
+      path                <- genPathBetween
       distanceAndDuration <- genDistanceAndDurationUnrelated
     } yield (path, distanceAndDuration)
 
-  def genPathSimpleAndDistanceUnrelatedSet: Gen[Map[PathSimple, DistanceAndDuration]] =
+  def genPathSimpleAndDistanceUnrelatedSet: Gen[Map[PathPlain, DistanceAndDuration]] =
     Gen.listOf(genPathSimpleAndDistanceUnrelated).map(_.toMap)
 
   case class BatchSlice(index: Int, size: Int)

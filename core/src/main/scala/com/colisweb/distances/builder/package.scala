@@ -1,8 +1,15 @@
 package com.colisweb.distances
 
+import cats.{Monad, Parallel}
+
 package object builder {
 
-  val base: Builders.Base.type             = Builders.Base
-  val sequential: Builders.Sequential.type = Builders.Sequential
-  val parallel: Builders.Parallel.type     = Builders.Parallel
+  def builders[F[_]](implicit F: Monad[F]): Builders[F] = new Builders[F] {
+    override protected implicit val M: Monad[F] = F
+  }
+
+  def parallel[F[_]](implicit F: Monad[F], PF: Parallel[F]): ParallelBuilders[F] = new ParallelBuilders[F] {
+    override protected implicit val M: Monad[F]    = F
+    override protected implicit val P: Parallel[F] = PF
+  }
 }

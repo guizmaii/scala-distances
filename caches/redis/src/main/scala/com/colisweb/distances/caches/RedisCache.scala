@@ -1,7 +1,6 @@
 package com.colisweb.distances.caches
 
-import com.colisweb.distances.cache.ScalaCacheCache
-import com.colisweb.distances.cache.ScalaCacheCache.Key
+import com.colisweb.distances.cache.{CacheKey, ScalaCacheCache}
 import scalacache.serialization.Codec
 import scalacache.{Flags, Mode}
 
@@ -10,7 +9,7 @@ import scala.concurrent.duration.FiniteDuration
 object RedisCache {
   import scalacache.redis.{RedisCache => RedisScalaCache}
 
-  def apply[F[_]: Mode, K: Key, V: Codec](
+  def apply[F[_]: Mode, K <: CacheKey, V: Codec](
       config: RedisConfiguration,
       flags: Flags,
       ttl: Option[FiniteDuration]

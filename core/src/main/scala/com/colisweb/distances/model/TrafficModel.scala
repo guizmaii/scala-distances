@@ -5,6 +5,7 @@ import enumeratum.{Enum, EnumEntry}
 
 import scala.collection.immutable
 
+// TODO: move to google implem
 sealed trait TrafficModel extends EnumEntry
 object TrafficModel extends Enum[TravelMode] {
   val values: immutable.IndexedSeq[TravelMode] = findValues
