@@ -1,29 +1,20 @@
 package com.colisweb.distances
 
-import cats.Monad
-import cats.data.Kleisli
-import com.colisweb.distances.model.Path
+import cats.MonadError
+import cats.implicits._
+import com.colisweb.distances.model.{DistanceAndDuration, DistanceError, Path}
 
-object Fallback {
+case class Fallback[F[_], P <: Path](first: DistanceApi[F, P], second: DistanceApi[F, P])(implicit F: MonadError[F, Throwable])
+  extends DistanceApi[F, P] {
 
-  def apply[F[_]: Monad, P <: Path, E](
-      first: Distances.Builder[F, P, _],
-      second: Distances.Builder[F, P, E]
-  ): Distances.Builder[F, P, E] =
-    first.flatMap {
-      case Right(value) => Kleisli.pure(Right(value))
-      case Left(_)      => second
+  override def distance(path: P): F[DistanceAndDuration] =
+    first.distance(path).recoverWith {
+      case _: DistanceError => second.distance(path)
     }
-}
 
-object FallbackOption {
-
-  def apply[F[_]: Monad, P <: Path, E](
-      first: Distances.BuilderOption[F, P],
-      second: Distances.Builder[F, P, E]
-  ): Distances.Builder[F, P, E] =
-    first.flatMap {
-      case Some(value) => Kleisli.pure(Right(value))
-      case None        => second
+  override def distances(paths: List[P]): F[Map[P, Either[DistanceError, DistanceAndDuration]]] =
+    first.distances(paths).flatMap { results =>
+      val (successes, failures) = results.partition(_._2.isRight)
+      distances(failures.keys.toList).map(successes ++ _)
     }
 }

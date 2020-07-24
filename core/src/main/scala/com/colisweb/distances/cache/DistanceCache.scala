@@ -1,10 +1,32 @@
 package com.colisweb.distances.cache
 
-import cats.Monad
 import cats.data.Kleisli
 import cats.implicits._
-import com.colisweb.distances.Distances
-import com.colisweb.distances.model.{DistanceAndDuration, Path}
+import cats.{Monad, MonadError}
+import com.colisweb.distances.model.{DistanceAndDuration, DistanceError, Path}
+import com.colisweb.distances.{DistanceApi, Distances}
+
+class DistanceCaching[F[_], P <: Path with CacheKey](cache: Cache[F, P, DistanceAndDuration], api: DistanceApi[F, P])(implicit F: MonadError[F, Throwable])
+  extends DistanceApi[F, P] {
+
+  override def distance(path: P): F[DistanceAndDuration] =
+    cache.caching(path, api.distance(path))
+
+  override def distances(paths: List[P]): F[Map[P, Either[DistanceError, DistanceAndDuration]]] =
+    paths
+      .traverse(path => cache.get(path).map(path -> _))
+      .flatMap(fallbackMissesFromApi(_, _.traverse { case (path, result) => cache.put(path, result)}))
+
+  protected def fallbackMissesFromApi(results: List[(P, Option[DistanceAndDuration])], updateCache: List[(P, DistanceAndDuration)] => F[List[Any]]): F[Map[P, Either[DistanceError, DistanceAndDuration]]] = {
+    val hits = results.collect { case (path, Some(result)) => path -> Right(result) }.toMap
+    val misses = results.collect { case (path, None) => path }
+    for {
+      apiResults <- distances(misses)
+      successes = apiResults.collect { case (path, Right(result)) => path -> result }.toList
+      _ <- updateCache(successes)
+    } yield hits ++ apiResults
+  }
+}
 
 object DistanceCache {
 
