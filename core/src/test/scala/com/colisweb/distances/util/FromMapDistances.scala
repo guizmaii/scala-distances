@@ -1,43 +1,39 @@
 package com.colisweb.distances.util
 
-import cats.Monad
-import cats.data.Kleisli
-import com.colisweb.distances.{Distances, builder}
-import com.colisweb.distances.model.{DistanceAndDuration, PathPlain}
+import cats.MonadError
+import com.colisweb.distances.model.{DistanceAndDuration, DistanceError, PathPlain}
+import com.colisweb.distances.{DistanceApi, DistanceBuilder}
 
-class FromMapDistances[F[_]](implicit F: Monad[F]) {
-  private val builders = builder.builders[F]
-  import builders._
+class FromMapDistances[F[_]](implicit F: MonadError[F, Throwable]) {
 
-  def fromMap(data: Map[PathPlain, DistanceAndDuration]): Distances.BuilderOption[F, PathPlain] =
-    Kleisli(path => F.pure(data.get(path)))
+  def fromMapOrError(
+      data: Map[PathPlain, DistanceAndDuration],
+      error: => DistanceError
+  ): DistanceBuilder[F, PathPlain] =
+    DistanceBuilder(new FromMapDistanceApi(data, error))
 
-  def empty: Distances.BuilderOption[F, PathPlain] =
+  def fromMap(data: Map[PathPlain, DistanceAndDuration]): DistanceBuilder[F, PathPlain] =
+    fromMapOrError(data, TestTypes.Error)
+
+  def empty: DistanceBuilder[F, PathPlain] =
     fromMap(Map.empty[PathPlain, DistanceAndDuration])
 
-  def fromMapOrError[E](error: => E, data: Map[PathPlain, DistanceAndDuration]): Distances.Builder[F, PathPlain, E] =
-    fromMap(data).nonOptional(error)
+  def emptyAndError(error: => DistanceError): DistanceBuilder[F, PathPlain] =
+    fromMapOrError(Map.empty[PathPlain, DistanceAndDuration], error)
 
-  def emptyAndError[E](error: => E): Distances.Builder[F, PathPlain, E] =
-    fromMapOrError(error, Map.empty[PathPlain, DistanceAndDuration])
+}
 
-  def batchFromMap(data: Map[PathPlain, DistanceAndDuration]): Distances.BuilderBatchOption[F, PathPlain] =
-    fromMap(data).batched
+class FromMapDistanceApi[F[_]](data: Map[PathPlain, DistanceAndDuration], error: => DistanceError)(
+    implicit F: MonadError[F, Throwable]
+) extends DistanceApi[F, PathPlain] {
 
-  def batchEmpty: Distances.BuilderBatchOption[F, PathPlain] =
-    empty.batched
-
-  def batchFromMapOrError[E](
-      error: => E,
-      data: Map[PathPlain, DistanceAndDuration]
-  ): Distances.BuilderBatch[F, PathPlain, E] =
-    fromMapOrError(error, data).batched
-
-  def batchEmptyAndError[E](error: => E): Distances.BuilderBatch[F, PathPlain, E] =
-    emptyAndError(error).batched
+  override def distance(path: PathPlain): F[DistanceAndDuration] = data.get(path) match {
+    case Some(distanceAndDuration) => F.pure(distanceAndDuration)
+    case None                      => F.raiseError(error)
+  }
 }
 
 object FromMapDistances {
 
-  def apply[F[_]: Monad]: FromMapDistances[F] = new FromMapDistances[F]
+  def apply[F[_]](implicit F: MonadError[F, Throwable]): FromMapDistances[F] = new FromMapDistances[F]
 }

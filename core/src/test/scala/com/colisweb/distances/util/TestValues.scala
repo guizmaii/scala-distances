@@ -1,9 +1,6 @@
 package com.colisweb.distances.util
 
 import com.colisweb.distances.model.{DistanceAndDuration, Point}
-import squants.space.Kilometers
-
-import scala.concurrent.duration._
 
 object TestValues {
 
