@@ -1,9 +1,7 @@
 package com.colisweb.distances.generators
 
-import com.colisweb.distances.Types._
-import com.colisweb.distances.caches.Toto
-import com.colisweb.distances.re.model.TravelMode
-import org.scalacheck.{Arbitrary, Gen}
+import com.colisweb.distances.model.DistanceAndDuration
+import org.scalacheck.Gen
 import squants.Length
 import squants.space.LengthConversions._
 
@@ -18,23 +16,25 @@ object Gens {
   final val lengthGen: Gen[Length]     = Gen.posNum[Double].map(_ meters)
   final val durationGen: Gen[Duration] = Gen.posNum[Int].map(_ seconds)
 
-  final val distanceGen: Gen[Distance] = for {
+  final val distanceGen: Gen[DistanceAndDuration] = for {
     length   <- lengthGen
     duration <- durationGen
-  } yield Distance(length = length, duration = duration)
-
-  final val latLongGen: Gen[LatLong] = for {
+  } yield DistanceAndDuration(length.toKilometers, duration.toSeconds)
+  /*
+  final val PointGen: Gen[Point] = for {
     lat: Double  <- Gen.posNum[Double]
     long: Double <- Gen.posNum[Double]
-  } yield LatLong(latitude = lat, longitude = long)
+  } yield Point(latitude = lat, longitude = long)
 
   import enumeratum.scalacheck._
 
   final val travelModeGen: Gen[TravelMode] = implicitly[Arbitrary[TravelMode]].arbitrary
 
-  final val directedPathGen: Gen[DirectedPathMultipleModes] = for {
-    origin      <- latLongGen
-    destination <- latLongGen
+
+   */
+  /* final val directedPathGen: Gen[DirectedPathMultipleModes] = for {
+    origin      <- PointGen
+    destination <- PointGen
     travelModes <- Gen.nonEmptyListOf(travelModeGen)
   } yield
     DirectedPathMultipleModes(
@@ -43,33 +43,20 @@ object Gens {
       travelModes = travelModes
     )
 
-  final val postalCodeGen: Gen[PostalCode] = Gen.listOfN(5, Gen.alphaNumChar).map(cs => PostalCode(cs.mkString))
-
-  final val nonAmbigueAddressGen: Gen[NonAmbiguousAddress] = for {
-    line1      <- Gen.alphaNumStr
-    line2      <- Gen.alphaNumStr
-    postalCode <- Gen.listOfN(5, Gen.alphaNumChar).map(_.mkString)
-    town       <- Gen.alphaNumStr
-    country    <- Gen.alphaNumStr
-  } yield
-    NonAmbiguousAddress(
-      line1 = line1,
-      line2 = line2,
-      postalCode = postalCode,
-      town = town,
-      country = country
-    )
-
+   */
+  /*
   final val totoGen: Gen[Toto] = for {
     name     <- nameGen
     age      <- ageGen
-    latLong  <- latLongGen
+    Point  <- PointGen
     distance <- distanceGen
   } yield
     Toto(
       name = name,
       age = age,
-      latLong = latLong,
+      Point = Point,
       distance = distance
     )
+
+ */
 }
