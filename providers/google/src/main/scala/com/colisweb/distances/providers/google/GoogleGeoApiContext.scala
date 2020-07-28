@@ -1,4 +1,4 @@
-package com.colisweb.google
+package com.colisweb.distances.providers.google
 
 import java.util.concurrent.TimeUnit
 

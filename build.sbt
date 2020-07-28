@@ -65,8 +65,8 @@ lazy val testKit = {
 lazy val root = Project(id = "scala-distances", base = file("."))
   .settings(moduleName := "root")
   .settings(noPublishSettings)
-  .aggregate(core, `google-provider`, `redis-cache`, `caffeine-cache`, `no-cache`, tests, benchmarks)
-  .dependsOn(core, `google-provider`, `redis-cache`, `caffeine-cache`, `no-cache`, tests, benchmarks)
+  .aggregate(core, `google-provider`, `redis-cache`, `caffeine-cache`, tests, benchmarks)
+  .dependsOn(core, `google-provider`, `redis-cache`, `caffeine-cache`, tests, benchmarks)
 
 lazy val core = project
   .settings(moduleName := "scala-distances-core")
@@ -103,17 +103,12 @@ lazy val `caffeine-cache` = project
   .settings(libraryDependencies += "com.github.cb372" %% "scalacache-caffeine" % scalaCacheVersion)
   .dependsOn(core)
 
-lazy val `no-cache` = project
-  .in(file("caches/no-cache"))
-  .settings(moduleName := "scala-distances-cache-noCache")
-  .dependsOn(core)
-
 //// Meta projects
 
 lazy val tests = project
   .settings(noPublishSettings)
   .settings(libraryDependencies ++= testKit)
-  .dependsOn(core, `google-provider`, `redis-cache`, `caffeine-cache`, `no-cache`)
+  .dependsOn(core, `google-provider`, `redis-cache`, `caffeine-cache`)
 
 lazy val benchmarks = project
   .enablePlugins(JmhPlugin)

@@ -6,9 +6,8 @@ import cats.Parallel
 import cats.effect.{Concurrent, ContextShift, IO}
 import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types._
-import com.colisweb.distances.providers.google.{GoogleDistanceProvider, GoogleDistanceProviderError}
+import com.colisweb.distances.providers.google.{GoogleDistanceProviderError, GoogleGeoApiContext, GoogleOld}
 import com.colisweb.distances.DistanceProvider
-import com.colisweb.google.GoogleGeoApiContext
 import monix.eval.Task
 import org.scalatest.{Matchers, WordSpec}
 import squants.space.LengthConversions._
@@ -17,7 +16,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class GoogleDistanceProviderSpec extends WordSpec with Matchers {
+class GoogleOldSpec extends WordSpec with Matchers {
 
   val loggingF: String => Unit = (s: String) => println(s.replaceAll("key=([^&]*)&", "key=REDACTED&"))
 
@@ -52,7 +51,7 @@ class GoogleDistanceProviderSpec extends WordSpec with Matchers {
     }
   }
 
-  "GoogleDistanceProvider.distances" should {
+  "GoogleOld.distances" should {
     "pass tests with cats-effect IO" should {
       val globalExecutionContext: ExecutionContext = ExecutionContext.global
       implicit val ctx: ContextShift[IO]           = IO.contextShift(globalExecutionContext)

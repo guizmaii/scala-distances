@@ -1,8 +1,8 @@
 package com.colisweb.distances.providers.google
 
-import com.colisweb.distances.model.TrafficModel.{BestGuess, Optimistic, Pessimistic}
+import com.colisweb.distances.providers.google.TrafficModel.{BestGuess, Optimistic, Pessimistic}
 import com.colisweb.distances.model.TravelMode.{Bicycling, Driving, Transit, Unknown, Walking}
-import com.colisweb.distances.model.{Point, TrafficModel, TravelMode}
+import com.colisweb.distances.model.{Point, TravelMode}
 import com.google.maps.model.TrafficModel.{BEST_GUESS, OPTIMISTIC, PESSIMISTIC}
 import com.google.maps.model.TravelMode._
 import com.google.maps.model.{

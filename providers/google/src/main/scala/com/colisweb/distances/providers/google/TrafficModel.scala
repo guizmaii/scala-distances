@@ -1,6 +1,7 @@
-package com.colisweb.distances.model
+package com.colisweb.distances.providers.google
 
 import cats.Show
+import com.colisweb.distances.model.TravelMode
 import enumeratum.{Enum, EnumEntry}
 
 import scala.collection.immutable

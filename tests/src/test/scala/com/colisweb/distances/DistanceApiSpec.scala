@@ -7,8 +7,8 @@ import cats.effect.{Concurrent, ContextShift, IO}
 import com.colisweb.distances.TravelMode._
 import com.colisweb.distances.Types._
 import com.colisweb.distances.caches.{CaffeineCache, RedisCache, RedisConfiguration}
+import com.colisweb.distances.providers.google.GoogleGeoApiContext
 import com.colisweb.distances.re.model.TravelMode
-import com.colisweb.google.GoogleGeoApiContext
 import monix.eval.Task
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
@@ -64,7 +64,7 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
     }
 
     "#distances" should {
-      "pass the same test suite than GoogleDistanceProvider" should {
+      "pass the same test suite than GoogleOld" should {
         def passTests[F[+ _]: Concurrent: Parallel](runSync: F[Any] => Any, cache: Cache[F]): Unit = {
           def removeFromCache(
               travelMode: TravelMode,
