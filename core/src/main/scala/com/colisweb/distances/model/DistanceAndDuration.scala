@@ -11,3 +11,7 @@ final case class DistanceAndDuration(distance: DistanceInKm, duration: DurationI
   def distanceWithUnit: Distance       = Kilometers(distance)
   def durationWithUnit: FiniteDuration = duration.seconds
 }
+
+object DistanceAndDuration {
+  val zero = DistanceAndDuration(0.0d, 0L)
+}

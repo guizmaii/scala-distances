@@ -1,63 +1,195 @@
 package com.colisweb.distances
 
-import java.time.Instant
+import java.time.ZonedDateTime
 
+import cats.Applicative
 import cats.effect.{ContextShift, IO}
-import com.colisweb.distances.DistanceApiSpec.GoogleProviderMock
-import com.colisweb.distances.bird.{DurationFromSpeed, Haversine}
-import com.colisweb.distances.caches.{CaffeineCache, RedisConfiguration}
+import com.colisweb.distances.DistanceApiSpec.RunSync
+import com.colisweb.distances.bird.HaversineDistanceProvider
+import com.colisweb.distances.caches.CaffeineCache
 import com.colisweb.distances.model.{DistanceAndDuration, PathWithModeAndSpeedAt, Point, TravelMode}
-import com.colisweb.distances.providers.google.{GoogleDistanceApi, GoogleDistanceProvider, GoogleGeoApiContext}
+import com.colisweb.distances.providers.google.{GoogleDistanceApi, GoogleGeoApiContext, TrafficModel}
+import monix.eval.Task
+import monix.execution.Scheduler
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfterEach, Matchers, WordSpec}
-import scalacache.Flags
+import scalacache.caffeine.{CaffeineCache => CaffeineScalaCache}
+import scalacache.{Flags, Mode}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Try
 
 class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with BeforeAndAfterEach {
-  import scalacache.CatsEffect.modes.async
+  private val caffeineInstance = CaffeineScalaCache.apply[Nothing]
 
   val globalExecutionContext: ExecutionContext = ExecutionContext.global
   implicit val contextShift: ContextShift[IO]  = IO.contextShift(globalExecutionContext)
 
-  val loggingF: String => Unit = (s: String) => println(s.replaceAll("key=([^&]*)&", "key=REDACTED&"))
+  val runSyncTry: RunSync[Try] = new RunSync[Try] {
+    override def apply[A](fa: Try[A]): A = fa.get
+  }
 
-  lazy val geoContext: GoogleGeoApiContext = GoogleGeoApiContext(System.getenv().get("GOOGLE_API_KEY"), loggingF)
-  lazy val redisConfiguration: RedisConfiguration =
-    RedisConfiguration(sys.env.getOrElse("REDIS_HOST", "127.0.0.1"), 6379)
+  val runAsyncIO: RunSync[IO] = new RunSync[IO] {
+    override def apply[A](fa: IO[A]): A = fa.unsafeRunSync()
+  }
+
+  val runAsyncMonix: RunSync[Task] = new RunSync[Task] {
+    implicit val monixScheduler: Scheduler = Scheduler.global
+    override def apply[A](fa: Task[A]): A  = fa.runSyncUnsafe()
+  }
+
+  private val configuration                      = Configuration.load
+  private val loggingF: String => Unit           = (s: String) => println(s.replaceAll("key=([^&]*)&", "key=REDACTED&"))
+  private val googleContext: GoogleGeoApiContext = GoogleGeoApiContext(configuration.google.apiKey, loggingF)
+
+  private val currentTime = ZonedDateTime.now().plusHours(1).toInstant
+  private val paris01     = Point(48.8640493, 2.3310526)
+  private val paris02     = Point(48.8675641, 2.34399)
+  private val paris18     = Point(48.891305, 2.3529867)
+
+  def apiTests[F[_]](api: DistanceApi[F, PathWithModeAndSpeedAt], run: RunSync[F]): Unit = {
+
+    "return zero between the same points" in {
+      val path = PathWithModeAndSpeedAt(
+        origin = paris01,
+        destination = paris01,
+        travelMode = TravelMode.Driving,
+        speed = 50,
+        departureTime = Some(currentTime)
+      )
+
+      val distance = run(api.distance(path))
+
+      distance shouldBe DistanceAndDuration.zero
+    }
+
+    "return smaller DistanceAndDuration from Paris 01 to Paris 02 than from Paris 01 to Paris 18" in {
+      val driveFrom01to02 = PathWithModeAndSpeedAt(
+        origin = paris01,
+        destination = paris02,
+        travelMode = TravelMode.Driving,
+        speed = 50,
+        departureTime = Some(currentTime)
+      )
+      val driveFrom01to18 = PathWithModeAndSpeedAt(
+        origin = paris01,
+        destination = paris18,
+        travelMode = TravelMode.Driving,
+        speed = 50,
+        departureTime = Some(currentTime)
+      )
+
+      val distanceFrom01to02 = run(api.distance(driveFrom01to02))
+      val distanceFrom01to18 = run(api.distance(driveFrom01to18))
+
+      distanceFrom01to02.distance should be < distanceFrom01to18.distance
+      distanceFrom01to02.duration should be < distanceFrom01to18.duration
+    }
+
+    // NB: Distance maybe longer, but Duration should be smaller
+    "return smaller or equal Duration with traffic in Paris" in {
+      val pathWithoutTraffic = PathWithModeAndSpeedAt(
+        origin = paris01,
+        destination = paris18,
+        travelMode = TravelMode.Driving,
+        speed = 50,
+        departureTime = None
+      )
+      val pathWithTraffic = PathWithModeAndSpeedAt(
+        origin = paris01,
+        destination = paris18,
+        travelMode = TravelMode.Driving,
+        speed = 50,
+        departureTime = Some(currentTime)
+      )
+
+      val distanceWithoutTraffic = run(api.distance(pathWithoutTraffic))
+      val distanceWithTraffic    = run(api.distance(pathWithTraffic))
+
+      distanceWithoutTraffic.duration should be <= distanceWithTraffic.duration
+    }
+  }
+
+  def fTests[F[_]: Applicative](run: RunSync[F], googleDistanceApi: GoogleDistanceApi[F, PathWithModeAndSpeedAt])(
+      implicit mode: Mode[F]
+  ): Unit = {
+
+    "Bird only" should {
+      apiTests(
+        DistanceBuilder
+          .withCacheKey(new HaversineDistanceProvider[F, PathWithModeAndSpeedAt])
+          .build,
+        run
+      )
+    }
+
+    "Bird with Caffeine cache" should {
+      apiTests(
+        DistanceBuilder
+          .withCacheKey(new HaversineDistanceProvider[F, PathWithModeAndSpeedAt])
+          .cache(CaffeineCache.apply(Flags.defaultFlags, Some(1 days)))
+          .build,
+        run
+      )
+    }
+
+    "Google only" should {
+      apiTests(
+        DistanceBuilder
+          .withCacheKey(googleDistanceApi)
+          .build,
+        run
+      )
+    }
+
+    "Google with Caffeine cache" should {
+      apiTests(
+        DistanceBuilder
+          .withCacheKey(googleDistanceApi)
+          .cache(CaffeineCache.apply(Flags.defaultFlags, Some(1 days)))
+          .build,
+        run
+      )
+    }
+  }
 
   "DistanceApi" should {
-    "#distance" should {
-      "if origin == destination" should {
-        "not call the provider and return immmediatly Distance.zero" in {
-          val cache    = CaffeineCache[IO, PathWithModeAndSpeedAt, DistanceAndDuration](Flags.defaultFlags, Some(1 days))
-          val provider = new GoogleProviderMock()
 
-          val distanceApi =
-            DistanceBuilder.withCacheKey(new GoogleDistanceApi[IO, PathWithModeAndSpeedAt](provider)).cache(cache).build
-          val point          = Point(0.0, 0.0)
-          val expectedResult = DistanceAndDuration(0.0, 0)
-          val path           = PathWithModeAndSpeedAt(point, point, TravelMode.Driving, 10, None)
-          distanceApi.distance(path).unsafeRunSync() shouldBe expectedResult
-        }
-      }
+    "sync with Try" should {
+      import cats.implicits.catsStdInstancesForTry
+      import scalacache.modes.try_._
+      fTests(runSyncTry, GoogleDistanceApi.sync(googleContext, TrafficModel.BestGuess))
     }
+
+    "async with IO" should {
+      import scalacache.CatsEffect.modes.async
+      fTests(runAsyncIO, GoogleDistanceApi.async[IO, PathWithModeAndSpeedAt](googleContext, TrafficModel.BestGuess))
+    }
+
+    "async with Monix Task" should {
+      import scalacache.CatsEffect.modes.async
+      fTests(
+        runAsyncMonix,
+        GoogleDistanceApi.async[Task, PathWithModeAndSpeedAt](googleContext, TrafficModel.BestGuess)
+      )
+    }
+  }
+
+  override protected def beforeEach(): Unit = {
+    super.beforeEach()
+    import scalacache.modes.try_._
+
+    // clear caches
+    caffeineInstance.doRemoveAll().get
+    ()
   }
 }
 
 object DistanceApiSpec {
-  class GoogleProviderMock extends GoogleDistanceProvider[IO](null, null, null) {
-    override def singleRequest(
-        travelMode: TravelMode,
-        origin: Point,
-        destination: Point,
-        departureTime: Option[Instant]
-    ): IO[DistanceAndDuration] = {
-      val distance = Haversine.distanceInKm(origin, destination)
-      val duration = DurationFromSpeed.durationForDistance(distance, 50)
-      IO.pure(DistanceAndDuration(distance, duration))
-    }
+
+  trait RunSync[F[_]] {
+    def apply[A](fa: F[A]): A
   }
 }

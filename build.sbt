@@ -56,6 +56,7 @@ lazy val testKit = {
     "org.scalatest"  %% "scalatest"             % "3.0.5",
     "com.beachape"   %% "enumeratum-scalacheck" % "1.5.16",
     "io.circe"       %% "circe-literal"         % circeVersion,
+    "com.github.pureconfig" %% "pureconfig" % "0.13.0",
     monix
   ) ++ kantancsv
 }.map(_ % Test)

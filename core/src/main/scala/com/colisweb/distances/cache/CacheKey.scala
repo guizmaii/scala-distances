@@ -5,5 +5,5 @@ trait CacheKey {
 }
 
 trait ProductCacheKey extends Product with CacheKey {
-  override def parts: Seq[Any] = productIterator.toSeq
+  override def parts: Seq[Any] = productIterator.toList
 }
