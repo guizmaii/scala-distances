@@ -1,9 +1,18 @@
 package com.colisweb.distances.cache
 
-trait CacheKey {
-  def parts: Seq[Any]
+trait CacheKey[K] {
+  def parts(key: K): Seq[Any]
 }
 
-trait ProductCacheKey extends Product with CacheKey {
-  override def parts: Seq[Any] = productIterator.toList
+object CacheKey {
+
+  class ProductCacheKey[K <: Product] extends CacheKey[K] {
+    override def parts(key: K): Seq[Any] = key.productIterator.toList
+  }
+
+  implicit def forProduct[K <: Product]: CacheKey[K] = new ProductCacheKey[K]
+
+  implicit class CacheKeySyntax[K](key: K)(implicit cacheKey: CacheKey[K]) {
+    def parts: Seq[Any] = cacheKey.parts(key)
+  }
 }

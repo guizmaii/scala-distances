@@ -4,8 +4,10 @@ import scalacache.{CacheAlg, Flags, Mode}
 
 import scala.concurrent.duration.FiniteDuration
 
-class ScalaCacheCache[F[_]: Mode, K <: CacheKey, V](cache: CacheAlg[V], flags: Flags, ttl: Option[FiniteDuration])
+class ScalaCacheCache[F[_]: Mode, K: CacheKey, V](cache: CacheAlg[V], flags: Flags, ttl: Option[FiniteDuration])
     extends Cache[F, K, V] {
+  import CacheKey.CacheKeySyntax
+
   private implicit val implicitFlags: Flags = flags
 
   override def get(key: K): F[Option[V]] = {
@@ -26,10 +28,10 @@ class ScalaCacheCache[F[_]: Mode, K <: CacheKey, V](cache: CacheAlg[V], flags: F
 
 object ScalaCacheCache {
 
-  def apply[F[_]: Mode, K <: CacheKey, V](
+  def apply[F[_]: Mode, K: CacheKey, V](
       cache: CacheAlg[V],
-      flags: Flags,
-      ttl: Option[FiniteDuration]
+      flags: Flags = Flags.defaultFlags,
+      ttl: Option[FiniteDuration] = None
   ): ScalaCacheCache[F, K, V] =
     new ScalaCacheCache(cache, flags, ttl)
 }

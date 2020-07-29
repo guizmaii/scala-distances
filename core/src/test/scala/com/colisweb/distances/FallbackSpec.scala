@@ -1,7 +1,7 @@
 package com.colisweb.distances
 
 import cats.implicits._
-import com.colisweb.distances.model.{DistanceAndDuration, PathPlain}
+import com.colisweb.distances.model.{DirectedPath, DistanceAndDuration}
 import com.colisweb.distances.util.FromMapDistances
 import com.colisweb.distances.util.TestTypes.{FirstError, SecondError}
 import org.scalacheck.Gen
@@ -20,8 +20,8 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
   private val secondError: SecondError = SecondError
 
   private def verifyDistanceForAllPathsMatchExpected(
-      distances: DistanceApi[Try, PathPlain],
-      mapping: Map[PathPlain, DistanceAndDuration]
+      distances: DistanceApi[Try, DirectedPath],
+      mapping: Map[DirectedPath, DistanceAndDuration]
   ) = {
     mapping.toList.map {
       case (path, expected) =>
@@ -30,8 +30,8 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
   }
 
   private def verifyDistanceForAllPathsReturnsSecondError(
-      distances: DistanceApi[Try, PathPlain],
-      paths: List[PathPlain]
+      distances: DistanceApi[Try, DirectedPath],
+      paths: List[DirectedPath]
   ) = {
     paths.map { path =>
       (path -> distances.distance(path)) shouldBe (path -> Failure(secondError))
@@ -45,7 +45,7 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
     ) { mapping =>
       val first     = FromMapDistances[Try].fromMapOrError(mapping, firstError)
       val second    = FromMapDistances[Try].emptyAndError(secondError)
-      val distances = first.fallback(second).build
+      val distances = first.fallback(second).api
       verifyDistanceForAllPathsMatchExpected(distances, mapping)
     }
 
@@ -54,7 +54,7 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
     ) { mapping =>
       val first     = FromMapDistances[Try].emptyAndError(firstError)
       val second    = FromMapDistances[Try].fromMapOrError(mapping, secondError)
-      val distances = first.fallback(second).build
+      val distances = first.fallback(second).api
       verifyDistanceForAllPathsMatchExpected(distances, mapping)
     }
 
@@ -64,7 +64,7 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
     ) { (mapping1, mapping2) =>
       val first     = FromMapDistances[Try].fromMapOrError(mapping1, firstError)
       val second    = FromMapDistances[Try].fromMapOrError(mapping2, secondError)
-      val distances = first.fallback(second).build
+      val distances = first.fallback(second).api
       // ++ order matters : if a path is present in both, value will be from mapping1
       verifyDistanceForAllPathsMatchExpected(distances, mapping2 ++ mapping1)
     }
@@ -74,7 +74,7 @@ class FallbackSpec extends WordSpec with GeneratorDrivenPropertyChecks with Matc
     ) { paths =>
       val first     = FromMapDistances[Try].emptyAndError(firstError)
       val second    = FromMapDistances[Try].emptyAndError(secondError)
-      val distances = first.fallback(second).build
+      val distances = first.fallback(second).api
       verifyDistanceForAllPathsReturnsSecondError(distances, paths)
     }
   }

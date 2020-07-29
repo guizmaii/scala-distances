@@ -9,7 +9,7 @@ object CaffeineCache {
 
   import scalacache.caffeine.{CaffeineCache => CaffeineScalaCache}
 
-  def apply[F[_]: Mode, K <: CacheKey, V](flags: Flags, ttl: Option[FiniteDuration]): ScalaCacheCache[F, K, V] = {
+  def apply[F[_]: Mode, K: CacheKey, V](flags: Flags, ttl: Option[FiniteDuration]): ScalaCacheCache[F, K, V] = {
     val caffeine = CaffeineScalaCache.apply[V]
     ScalaCacheCache(caffeine, flags, ttl)
   }

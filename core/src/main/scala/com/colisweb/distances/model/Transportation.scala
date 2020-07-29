@@ -2,14 +2,14 @@ package com.colisweb.distances.model
 
 import java.time.Instant
 
-trait FixedSpeedTransportation {
-  val speed: SpeedInKmH
+trait FixedSpeedTransportation[P] {
+  def speed(path: P): SpeedInKmH
 }
 
-trait TravelModeTransportation {
-  val travelMode: TravelMode
+trait TravelModeTransportation[P] {
+  def travelMode(path: P): TravelMode
 }
 
-trait DepartureTime {
-  val departureTime: Option[Instant]
+trait DepartureTime[P] {
+  def departureTime(path: P): Option[Instant]
 }

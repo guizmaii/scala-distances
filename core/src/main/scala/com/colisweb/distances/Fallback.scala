@@ -2,9 +2,9 @@ package com.colisweb.distances
 
 import cats.MonadError
 import cats.implicits._
-import com.colisweb.distances.model.{DistanceAndDuration, DistanceError, Path}
+import com.colisweb.distances.model.{DistanceAndDuration, DistanceError}
 
-case class Fallback[F[_], P <: Path](first: DistanceApi[F, P], second: DistanceApi[F, P])(
+case class Fallback[F[_], P](first: DistanceApi[F, P], second: DistanceApi[F, P])(
     implicit F: MonadError[F, Throwable]
 ) extends DistanceApi[F, P] {
 

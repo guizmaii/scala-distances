@@ -9,7 +9,7 @@ import scala.concurrent.duration.FiniteDuration
 object RedisCache {
   import scalacache.redis.{RedisCache => RedisScalaCache}
 
-  def apply[F[_]: Mode, K <: CacheKey, V: Codec](
+  def apply[F[_]: Mode, K: CacheKey, V: Codec](
       config: RedisConfiguration,
       flags: Flags,
       ttl: Option[FiniteDuration]

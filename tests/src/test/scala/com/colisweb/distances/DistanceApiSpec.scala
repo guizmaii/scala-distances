@@ -5,9 +5,8 @@ import java.time.ZonedDateTime
 import cats.Applicative
 import cats.effect.{ContextShift, IO}
 import com.colisweb.distances.DistanceApiSpec.RunSync
-import com.colisweb.distances.bird.HaversineDistanceProvider
 import com.colisweb.distances.caches.CaffeineCache
-import com.colisweb.distances.model.{DistanceAndDuration, PathWithModeAndSpeedAt, Point, TravelMode}
+import com.colisweb.distances.model.{DirectedPathWithModeAndSpeedAt, DistanceAndDuration, Point, TravelMode}
 import com.colisweb.distances.providers.google.{GoogleDistanceApi, GoogleGeoApiContext, TrafficModel}
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -49,10 +48,10 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
   private val paris02     = Point(48.8675641, 2.34399)
   private val paris18     = Point(48.891305, 2.3529867)
 
-  def apiTests[F[_]](api: DistanceApi[F, PathWithModeAndSpeedAt], run: RunSync[F]): Unit = {
+  def apiTests[F[_]](api: DistanceApi[F, DirectedPathWithModeAndSpeedAt], run: RunSync[F]): Unit = {
 
     "return zero between the same points" in {
-      val path = PathWithModeAndSpeedAt(
+      val path = DirectedPathWithModeAndSpeedAt(
         origin = paris01,
         destination = paris01,
         travelMode = TravelMode.Driving,
@@ -66,14 +65,14 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
     }
 
     "return smaller DistanceAndDuration from Paris 01 to Paris 02 than from Paris 01 to Paris 18" in {
-      val driveFrom01to02 = PathWithModeAndSpeedAt(
+      val driveFrom01to02 = DirectedPathWithModeAndSpeedAt(
         origin = paris01,
         destination = paris02,
         travelMode = TravelMode.Driving,
         speed = 50,
         departureTime = Some(currentTime)
       )
-      val driveFrom01to18 = PathWithModeAndSpeedAt(
+      val driveFrom01to18 = DirectedPathWithModeAndSpeedAt(
         origin = paris01,
         destination = paris18,
         travelMode = TravelMode.Driving,
@@ -90,14 +89,14 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
     // NB: Distance maybe longer, but Duration should be smaller
     "return smaller or equal Duration with traffic in Paris" in {
-      val pathWithoutTraffic = PathWithModeAndSpeedAt(
+      val pathWithoutTraffic = DirectedPathWithModeAndSpeedAt(
         origin = paris01,
         destination = paris18,
         travelMode = TravelMode.Driving,
         speed = 50,
         departureTime = None
       )
-      val pathWithTraffic = PathWithModeAndSpeedAt(
+      val pathWithTraffic = DirectedPathWithModeAndSpeedAt(
         origin = paris01,
         destination = paris18,
         travelMode = TravelMode.Driving,
@@ -112,44 +111,43 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
     }
   }
 
-  def fTests[F[_]: Applicative](run: RunSync[F], googleDistanceApi: GoogleDistanceApi[F, PathWithModeAndSpeedAt])(
+  def fTests[F[_]: Applicative](
+      run: RunSync[F],
+      googleDistanceApi: GoogleDistanceApi[F, DirectedPathWithModeAndSpeedAt]
+  )(
       implicit mode: Mode[F]
   ): Unit = {
 
     "Bird only" should {
       apiTests(
-        DistanceBuilder
-          .withCacheKey(new HaversineDistanceProvider[F, PathWithModeAndSpeedAt])
-          .build,
+        Distances.haversine[F, DirectedPathWithModeAndSpeedAt].api,
         run
       )
     }
 
     "Bird with Caffeine cache" should {
       apiTests(
-        DistanceBuilder
-          .withCacheKey(new HaversineDistanceProvider[F, PathWithModeAndSpeedAt])
-          .cache(CaffeineCache.apply(Flags.defaultFlags, Some(1 days)))
-          .build,
+        Distances
+          .haversine[F, DirectedPathWithModeAndSpeedAt]
+          .caching(CaffeineCache.apply(Flags.defaultFlags, Some(1 days)))
+          .api,
         run
       )
     }
 
     "Google only" should {
       apiTests(
-        DistanceBuilder
-          .withCacheKey(googleDistanceApi)
-          .build,
+        googleDistanceApi,
         run
       )
     }
 
     "Google with Caffeine cache" should {
       apiTests(
-        DistanceBuilder
-          .withCacheKey(googleDistanceApi)
-          .cache(CaffeineCache.apply(Flags.defaultFlags, Some(1 days)))
-          .build,
+        Distances
+          .from(googleDistanceApi)
+          .caching(CaffeineCache.apply(Flags.defaultFlags, Some(1 days)))
+          .api,
         run
       )
     }
@@ -165,14 +163,17 @@ class DistanceApiSpec extends WordSpec with Matchers with ScalaFutures with Befo
 
     "async with IO" should {
       import scalacache.CatsEffect.modes.async
-      fTests(runAsyncIO, GoogleDistanceApi.async[IO, PathWithModeAndSpeedAt](googleContext, TrafficModel.BestGuess))
+      fTests(
+        runAsyncIO,
+        GoogleDistanceApi.async[IO, DirectedPathWithModeAndSpeedAt](googleContext, TrafficModel.BestGuess)
+      )
     }
 
     "async with Monix Task" should {
       import scalacache.CatsEffect.modes.async
       fTests(
         runAsyncMonix,
-        GoogleDistanceApi.async[Task, PathWithModeAndSpeedAt](googleContext, TrafficModel.BestGuess)
+        GoogleDistanceApi.async[Task, DirectedPathWithModeAndSpeedAt](googleContext, TrafficModel.BestGuess)
       )
     }
   }
