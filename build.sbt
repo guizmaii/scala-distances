@@ -66,8 +66,8 @@ lazy val testKit = {
 lazy val root = Project(id = "scala-distances", base = file("."))
   .settings(moduleName := "root")
   .settings(noPublishSettings)
-  .aggregate(core, `google-provider`, `redis-cache`, `caffeine-cache`, tests, benchmarks)
-  .dependsOn(core, `google-provider`, `redis-cache`, `caffeine-cache`, tests, benchmarks)
+  .aggregate(core, `google-provider`, `redis-cache`, `caffeine-cache`, tests)
+  .dependsOn(core, `google-provider`, `redis-cache`, `caffeine-cache`, tests)
 
 lazy val core = project
   .settings(moduleName := "scala-distances-core")
@@ -110,12 +110,6 @@ lazy val tests = project
   .settings(noPublishSettings)
   .settings(libraryDependencies ++= testKit)
   .dependsOn(core, `google-provider`, `redis-cache`, `caffeine-cache`)
-
-lazy val benchmarks = project
-  .enablePlugins(JmhPlugin)
-  .settings(noPublishSettings)
-  .settings(libraryDependencies += monix)
-  .dependsOn(core)
 
 //// Publishing settings
 
