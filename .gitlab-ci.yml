@@ -1,30 +1,7 @@
-stages:
-  - build
-  - test
-  - publish
+include:
+  - 'https://gitlab.com/colisweb-open-source/ci-common/raw/v9.4.2/templates/scala.yml'
+  - 'https://gitlab.com/colisweb-open-source/ci-common/raw/v9.4.2/services/redis.yml'
 
-compile scala sources:
-  stage: build
-  script:
-    - sbt test:compile
-
-sbt test:
-  stage: test
-  script:
-    - sbt coverage test coverageReport
-  services:
-    - redis:5.0.3
-  variables:
-    REDIS_HOST: redis
-
-publish on bintray:
-  stage: publish
-  only:
-    - master
-  script:
-    - sbt -Dbintray.user=gitlab-ci -Dbintray.pass=$BINTRAY_API_KEY publish
-
-image: hseeberger/scala-sbt:11.0.3_1.2.8_2.12.8
 variables:
   SBT_OPTS: "-Dsbt.global.base=sbt-cache/sbtboot -Dsbt.boot.directory=sbt-cache/boot -Dsbt.ivy.home=sbt-cache/ivy"
   COURSIER_CACHE: "sbt-cache/coursier"
@@ -33,5 +10,26 @@ cache:
   paths:
     - sbt-cache
 
-before_script:
-  - gpg --import <(echo "$GITLAB_PGP_PRIVATE_KEY") && source <(gpg -q --decrypt secrets-env.sh.secret)
+compile:
+  extends: .sbt-compile
+  tags: []
+
+.test-scala-distances:
+  extends:
+    - .sbt-test
+    - .redis
+  tags: []
+
+test core:
+  extends: .test-scala-distances
+
+test tests:
+  extends: .test-scala-distances
+
+version:
+  extends: .version
+  tags: []
+
+publish on bintray:
+  extends: .bintray-publish
+  tags: []
