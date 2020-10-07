@@ -1,4 +1,4 @@
-addSbtPlugin("io.get-coursier"           % "sbt-coursier"              % "1.0.3")
+addSbtPlugin("io.get-coursier"           % "sbt-coursier"              % "2.0.1")
 addSbtPlugin("com.timushev.sbt"          % "sbt-updates"               % "0.5.1")
 addSbtPlugin("org.scalameta"             % "sbt-scalafmt"              % "2.4.2")
 addSbtPlugin("org.scoverage"             % "sbt-scoverage"             % "1.6.1")
