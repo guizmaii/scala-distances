@@ -25,9 +25,8 @@ class FallbackSpec extends AnyWordSpec with ScalaCheckPropertyChecks with Matche
       distances: DistanceApi[Try, DirectedPath],
       mapping: Map[DirectedPath, DistanceAndDuration]
   ) = {
-    mapping.toList.map {
-      case (path, expected) =>
-        (path -> distances.distance(path)) shouldBe (path -> Success(expected))
+    mapping.toList.map { case (path, expected) =>
+      (path -> distances.distance(path)) shouldBe (path -> Success(expected))
     }
   }
 
