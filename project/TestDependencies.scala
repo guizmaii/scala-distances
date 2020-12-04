@@ -3,7 +3,7 @@ import sbt._
 object TestVersions {
   final lazy val kantan        = "0.6.1"
   final lazy val scalacheck    = "1.15.0"
-  final lazy val scalatest     = "3.2.2"
+  final lazy val scalatest     = "3.2.3"
   final lazy val scalatestPlus = "3.1.0.0-RC2"
   final lazy val enumeratum    = "1.6.1"
 }
