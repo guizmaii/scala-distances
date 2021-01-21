@@ -1,8 +1,8 @@
 import sbt._
 
 object Versions {
-  lazy val cats               = "2.3.0"
-  lazy val catsEffect         = "2.3.0"
+  lazy val cats               = "2.3.1"
+  lazy val catsEffect         = "2.3.1"
   lazy val circe              = "0.13.0"
   lazy val circeOptics        = "0.13.0"
   lazy val enumeratum         = "1.6.1"
