@@ -17,8 +17,7 @@ final case class GoogleGeoApiContext(
 ) {
   assert(apiKey.trim.nonEmpty, "apiKey must be a non empty String")
 
-  /**
-    * More infos about the rate limit:
+  /** More infos about the rate limit:
     *   - https://developers.google.com/maps/documentation/distance-matrix/usage-and-billing
     *
     * Useful information taken from this documentation at the date of 2018.11.23:

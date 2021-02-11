@@ -25,7 +25,6 @@ lazy val core = project
   .settings(moduleName := "scala-distances-core")
   .settings(
     libraryDependencies ++= Seq(
-      CompileTimeDependencies.cats,
       CompileTimeDependencies.catsEffect,
       CompileTimeDependencies.circe,
       CompileTimeDependencies.circeGeneric,
