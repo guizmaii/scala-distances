@@ -52,7 +52,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
   )
   private val googleResults = Map(
     (paris01 -> paris02, DistanceAndDuration(1.4, 345L)),
-    (paris01 -> paris18, DistanceAndDuration(4.5, 1030L))
+    (paris01 -> paris18, DistanceAndDuration(4.5, 1075L))
   )
 
   "DistanceApi" should {
@@ -220,7 +220,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
       val distanceFrom01to02 = run(api.distance(driveFrom01to02))
 
       distanceFrom01to02.distance shouldBe results(paris01 -> paris02).distance +- 0.1
-      distanceFrom01to02.duration shouldBe results(paris01 -> paris02).duration +- 35L
+      distanceFrom01to02.duration shouldBe results(paris01 -> paris02).duration +- 25L
     }
 
     "return approximate distance and duration from Paris 01 to Paris 18 without traffic" in {
@@ -234,7 +234,7 @@ class DistanceApiSpec extends AnyWordSpec with Matchers with ScalaFutures with B
       val distanceFrom01to18 = run(api.distance(driveFrom01to18))
 
       distanceFrom01to18.distance shouldBe results(paris01 -> paris18).distance +- 0.1
-      distanceFrom01to18.duration shouldBe results(paris01 -> paris18).duration +- 35L
+      distanceFrom01to18.duration shouldBe results(paris01 -> paris18).duration +- 25L
     }
   }
 
